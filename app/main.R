@@ -1,14 +1,25 @@
+#import packages
 box::use(
   shiny[
     NS,
     moduleServer,
     tagList,
-    tags
+    tags,
+    checkboxGroupInput,
+    reactive
   ],
   bslib[
     page_navbar,
-    nav_panel
+    nav_panel,
+    accordion,
+    accordion_panel,
+    sidebar,
+    navset_pill
   ],
+  bsicons[bs_icon]
+)
+#import internal modules
+box::use(
   app /
     logic /
     config[dto_colors, bioflow_url, bioflow_duc2_url, s3_bucket_seabass_url],
@@ -22,7 +33,9 @@ box::use(
   app / view / home[mod_home_ui, mod_home_server],
   app / view / seabass / main[mod_seabass_ui, mod_seabass_server],
   app / view / porpoise[mod_porpoise_ui, mod_porpoise_server],
-  app / view / environmental_data[mod_env_ui, mod_env_server]
+  app / view / environmental_data[mod_env_ui, mod_env_server],
+  app / view / habitat_suitability[mod_habitat_suitability_ui, mod_habitat_suitability_server],
+  app / view / lagrangian_connectivity[mod_lagrangian_connectivity_ui, mod_lagrangian_connectivity_server]
 )
 
 shiny::addResourcePath(
@@ -48,16 +61,66 @@ etn_monthyear_individual_sum <- build_monthyear_rds(
 #' @export
 ui <- function(id) {
   ns <- NS(id)
+  accordion_filters <- bslib::accordion(
+    bslib::accordion_panel(
+      "Map layers", icon = bsicons::bs_icon("menu-app"),
+      checkboxGroupInput(
+        "layers",
+        "Map layers",
+        choices = c(
+          "Bathymetry (multicolor)",
+          "Seabed substrates",
+          "Seabed habitats",
+          "Marine Spatial Plans"
+        ),
+        selected = "Bathymetry (multicolor)"
+      )
+    ),
+    bslib::accordion_panel(
+      "Habitat Suitability", icon = bsicons::bs_icon("layers"),
+      checkboxGroupInput(
+        ns("habitat_layers_sidebar"),
+        "Habitat Suitability Layers",
+        choices = c(
+          "Layer 1" = "layer_1",
+          "Layer 2" = "layer_2",
+          "Layer 3" = "layer_3"
+        ),
+        selected = "layer_1"
+      )
+    ),
+    bslib::accordion_panel(
+      "Lagrangian Connectivity", icon = bsicons::bs_icon("diagram-3"),
+      checkboxGroupInput(
+        ns("connectivity_layers_sidebar"),
+        "Connectivity Layers",
+        choices = c(
+          "Connectivity plot" = "connectivity"
+        ),
+        selected = "connectivity"
+      )
+    ),
+    bslib::accordion_panel(
+      "Numerical", icon = bsicons::bs_icon("sliders"),
+      "Placeholder for numerical filters"
+    )
+  )
   page_navbar(
-    title = tags$a(
-      href = bioflow_url,
-      target = "_blank",
-      rel = "noopener",
-      class = "navbar-logo-link",
-      tags$img(
-        src = "assets/Logo_BIO-Flow2023_Final_Positive.png",
-        height = "42px",
-        alt = "DTO-Bioflow"
+    title = tagList(
+      tags$a(
+        href = bioflow_url,
+        target = "_blank",
+        rel = "noopener",
+        class = "navbar-logo-link",
+        tags$img(
+          src = "assets/Logo_BIO-Flow2023_Final_Positive.png",
+          height = "42px",
+          alt = "DTO-Bioflow"
+        )
+      ),
+      tags$span(
+        class = "navbar-page-title",
+        "Marine life habitat use in potential offshore infrastructure areas"
       )
     ),
     id = ns("tabsetPanelID"),
@@ -77,25 +140,7 @@ ui <- function(id) {
       width = 320,
       open = "desktop",
       title = "Global sidebar",
-      tags$p("Quick links:"),
-      tags$ul(
-        tags$li(
-          tags$a(
-            href = bioflow_url,
-            target = "_blank",
-            rel = "noopener",
-            "BIO-Flow"
-          )
-        ),
-        tags$li(
-          tags$a(
-            href = bioflow_duc2_url,
-            target = "_blank",
-            rel = "noopener",
-            "BIO-Flow DUC2"
-          )
-        )
-      )
+      accordion_filters
     ),
     window_title = "Marine life habitat use in potential offshore infrastructure areas",
     navbar_options = bslib::navbar_options(
@@ -113,38 +158,8 @@ ui <- function(id) {
       )
     ),
     nav_panel(
-      title = tagList(
-        tags$img(
-          src = "assets/D_labrax_phylopic_CC0.png",
-          height = "24px",
-          style = "vertical-align:middle; margin-right:8px;"
-        ),
-        tags$span(
-          "European seabass",
-          style = "font-size: 16px; vertical-align:middle;"
-        )
-      ),
-      class = "lower-level-tabs",
-      mod_seabass_ui(ns("seabass"))
-    ),
-    nav_panel(
-      title = tagList(
-        tags$img(
-          src = "assets/P_phocoena_phylopic_CC0.png",
-          height = "24px",
-          style = "vertical-align:middle; margin-right:8px;"
-        ),
-        tags$span(
-          "Harbour porpoise",
-          style = "font-size: 16px; vertical-align:middle;"
-        )
-      ),
-      class = "lower-level-tabs",
-      mod_porpoise_ui(ns("porpoise"))
-    ),
-    nav_panel(
       title = tags$span(
-        "Environmental Layers",
+        "Overview",
         style = "font-size: 16px; vertical-align:middle;"
       ),
       class = "lower-level-tabs",
@@ -155,11 +170,38 @@ ui <- function(id) {
         wms_layers = wms_layers
       )
     ),
-    bslib::nav_spacer(),
-    bslib::nav_item(
-      tags$span(
-        class = "navbar-page-title",
-        "Marine life habitat use in potential offshore infrastructure areas"
+    nav_panel(
+      "Datatypes",
+      navset_pill(
+        id = ns("datatypes"),
+        nav_panel(
+          title = tags$span(
+            "Acoustic telemetry",
+            style = "font-size: 16px; vertical-align:middle;"
+          ),
+          mod_seabass_ui(ns("seabass"))
+        ),
+        nav_panel(
+          title = tags$span(
+            "Passive acoustic monitoring",
+            style = "font-size: 16px; vertical-align:middle;"
+          ),
+          mod_porpoise_ui(ns("porpoise"))
+        ),
+        nav_panel(
+          title = tags$span(
+            "Habitat suitability",
+            style = "font-size: 16px; vertical-align:middle;"
+          ),
+          mod_habitat_suitability_ui(ns("habitat_suitability"))
+        ),
+        nav_panel(
+          title = tags$span(
+            "Lagrangian connectivity",
+            style = "font-size: 16px; vertical-align:middle;"
+          ),
+          mod_lagrangian_connectivity_ui(ns("lagrangian_connectivity"))
+        )
       )
     )
   )
@@ -168,6 +210,16 @@ ui <- function(id) {
 #' @export
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
+    
+    # Create reactive expressions for sidebar layer selections
+    habitat_layers_reactive <- reactive({
+      input$habitat_layers_sidebar
+    })
+    
+    connectivity_layers_reactive <- reactive({
+      input$connectivity_layers_sidebar
+    })
+    
     mod_home_server("home")
     mod_seabass_server(
       "seabass",
@@ -193,6 +245,16 @@ server <- function(id) {
       wms_layers = wms_layers,
       base_map_fun = make_base_map,
       make_env_wms_map_fun = make_env_wms_map
+    )
+    mod_habitat_suitability_server(
+      id = "habitat_suitability",
+      base_map_fun = make_base_map,
+      sidebar_layers = habitat_layers_reactive
+    )
+    mod_lagrangian_connectivity_server(
+      id = "lagrangian_connectivity",
+      base_map_fun = make_base_map,
+      sidebar_layers = connectivity_layers_reactive
     )
   })
 }

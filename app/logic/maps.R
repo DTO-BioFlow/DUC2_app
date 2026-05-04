@@ -381,140 +381,168 @@ make_env_wms_map <- function(
       options = layersControlOptions(collapsed = FALSE),
       position = "bottomleft"
     ) |>
-
-    # JS behaviour
-    onRender(
-      "
-      function(el, x, payload){
-        var map = this;
-        var legends  = (payload && payload.legends)  ? payload.legends  : {};
-        var sections = (payload && payload.sections) ? payload.sections : {};
-
-        function norm(s){ return (s || '').replace(/\\s+/g,' ').trim(); }
-
-        function showByLayer(layerName, visible){
-          var id = legends[layerName];
-          if(!id) return;
-          var node = document.getElementById(id);
-          if(!node) return;
-          node.style.display = visible ? 'block' : 'none';
-        }
-
-        function syncFromLayerControl(){
-          var inputs = el.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]');
-          inputs.forEach(function(inp){
-            var label = inp.parentElement;
-            var name  = label ? norm(label.textContent) : null;
-            if(name && legends[name] !== undefined){
-              showByLayer(name, inp.checked);
-            }
-          });
-        }
-
-        function addBaseHeadingOnce(){
-          var ctl = el.querySelector('.leaflet-control-layers');
-          if(!ctl) return;
-          if(ctl.querySelector('.base-heading')) return;
-          var base = ctl.querySelector('.leaflet-control-layers-base');
-          if(!base) return;
-
-          var hd = document.createElement('div');
-          hd.className = 'base-heading';
-          hd.style.textAlign = 'left';
-          hd.style.fontWeight = '600';
-          hd.style.margin = '0 0 6px 0';
-          hd.textContent = 'Background map';
-          base.prepend(hd);
-        }
-
-        function insertOverlaySectionHeadings(){
-          var ctl = el.querySelector('.leaflet-control-layers');
-          if(!ctl) return;
-
-          var overlays = ctl.querySelector('.leaflet-control-layers-overlays');
-          if(!overlays) return;
-
-          overlays.querySelectorAll('.overlay-section-heading').forEach(function(n){ n.remove(); });
-
-          var labelByName = {};
-          overlays.querySelectorAll('label').forEach(function(lab){
-            var name = norm(lab.textContent);
-            if(name) labelByName[name] = lab;
-          });
-
-          Object.keys(sections).forEach(function(sectionName){
-            var layers = sections[sectionName] || [];
-            var firstLabel = null;
-
-            for(var i=0; i<layers.length; i++){
-              var nm = layers[i];
-              if(labelByName[nm]){
-                firstLabel = labelByName[nm];
-                break;
-              }
-            }
-            if(!firstLabel) return;
-
-            var heading = document.createElement('div');
-            heading.className = 'overlay-section-heading';
-            heading.textContent = sectionName;
-            heading.style.fontWeight = '600';
-            heading.style.margin = '8px 0 4px 0';
-            heading.style.paddingTop = '6px';
-            heading.style.borderTop = '1px solid rgba(0,0,0,0.15)';
-            heading.style.textAlign = 'left';
-
-            overlays.insertBefore(heading, firstLabel);
-          });
-        }
-
-        function makeLegendsScrollable(){
-          var maxH = Math.max(120, Math.floor(el.getBoundingClientRect().height * 0.5));
-          var legendsNodes = el.querySelectorAll('details[id^=\"legend-\"]');
-
-          legendsNodes.forEach(function(d){
-            d.style.maxHeight = maxH + 'px';
-            d.style.overflowY = 'auto';
-            d.style.overflowX = 'hidden';
-
-            var sum = d.querySelector('summary');
-            if(sum){
-              sum.style.position = 'sticky';
-              sum.style.top = '0';
-              sum.style.background = 'white';
-              sum.style.zIndex = '1';
-            }
-          });
-        }
-
-        Object.keys(legends).forEach(function(layerName){
-          showByLayer(layerName, false);
-        });
-
-        requestAnimationFrame(function(){
-          requestAnimationFrame(function(){
-            addBaseHeadingOnce();
-            insertOverlaySectionHeadings();
-            makeLegendsScrollable();
-            syncFromLayerControl();
-          });
-        });
-
-        map.on('overlayadd', function(e){ showByLayer(e.name, true); });
-        map.on('overlayremove', function(e){ showByLayer(e.name, false); });
-
-        map.on('layeradd layerremove', function(){
-          addBaseHeadingOnce();
-          insertOverlaySectionHeadings();
-          makeLegendsScrollable();
-          syncFromLayerControl();
-        });
-
-        window.addEventListener('resize', function(){
-          makeLegendsScrollable();
-        });
-      }
-      ",
-      data = payload
+    onRender(htmlwidgets::JS(
+      "function(el, x, payload){",
+      "var map = this;",
+      "var legends  = (payload && payload.legends)  ? payload.legends  : {};",
+      "var sections = (payload && payload.sections) ? payload.sections : {};",
+      "var activeMarker = null;",
+      "",
+      "function norm(s){ return (s || '').replace(/\\s+/g,' ').trim(); }",
+      "",
+      "function showByLayer(layerName, visible){",
+      "  var id = legends[layerName];",
+      "  if(!id) return;",
+      "  var node = document.getElementById(id);",
+      "  if(!node) return;",
+      "  node.style.display = visible ? 'block' : 'none';",
+      "}",
+      "",
+      "function syncFromLayerControl(){",
+      "  var inputs = el.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]');",
+      "  inputs.forEach(function(inp){",
+      "    var label = inp.parentElement;",
+      "    var name  = label ? norm(label.textContent) : null;",
+      "    if(name && legends[name] !== undefined){",
+      "      showByLayer(name, inp.checked);",
+      "    }",
+      "  });",
+      "}",
+      "",
+      "function activeOverlayNames(){",
+      "  var names = [];",
+      "  var inputs = el.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]');",
+      "  inputs.forEach(function(inp){",
+      "    if(inp.checked){",
+      "      var label = inp.parentElement;",
+      "      var name  = label ? norm(label.textContent) : null;",
+      "      if(name) names.push(name);",
+      "    }",
+      "  });",
+      "  return names;",
+      "}",
+      "",
+      "function makeMarkerPopup(latlng){",
+      "  var activeLayers = activeOverlayNames();",
+      "  var html = '<div style=\"font-size:14px;line-height:1.4;\">' +",
+      "    '<strong>Clicked location</strong><br/>' +",
+      "    latlng.lat.toFixed(5) + ', ' + latlng.lng.toFixed(5) +",
+      "    '</div><div style=\"margin-top:8px;\">' +",
+      "    '<strong>Active overlay layers</strong><br/>' +",
+      "    (activeLayers.length ? activeLayers.join('<br/>') : 'None') +",
+      "    '</div>';",
+      "  return html;",
+      "}",
+      "",
+      "function updateMarkerPopup(){",
+      "  if(!activeMarker) return;",
+      "  activeMarker.setPopupContent(makeMarkerPopup(activeMarker.getLatLng()));",
+      "}",
+      "",
+      "function addBaseHeadingOnce(){",
+      "  var ctl = el.querySelector('.leaflet-control-layers');",
+      "  if(!ctl) return;",
+      "  if(ctl.querySelector('.base-heading')) return;",
+      "  var base = ctl.querySelector('.leaflet-control-layers-base');",
+      "  if(!base) return;",
+      "  var hd = document.createElement('div');",
+      "  hd.className = 'base-heading';",
+      "  hd.style.textAlign = 'left';",
+      "  hd.style.fontWeight = '600';",
+      "  hd.style.margin = '0 0 6px 0';",
+      "  hd.textContent = 'Background map';",
+      "  base.prepend(hd);",
+      "}",
+      "",
+      "function insertOverlaySectionHeadings(){",
+      "  var ctl = el.querySelector('.leaflet-control-layers');",
+      "  if(!ctl) return;",
+      "  var overlays = ctl.querySelector('.leaflet-control-layers-overlays');",
+      "  if(!overlays) return;",
+      "  overlays.querySelectorAll('.overlay-section-heading').forEach(function(n){ n.remove(); });",
+      "  var labelByName = {};",
+      "  overlays.querySelectorAll('label').forEach(function(lab){",
+      "    var name = norm(lab.textContent);",
+      "    if(name) labelByName[name] = lab;",
+      "  });",
+      "  Object.keys(sections).forEach(function(sectionName){",
+      "    var layers = sections[sectionName] || [];",
+      "    var firstLabel = null;",
+      "    for(var i=0; i<layers.length; i++){",
+      "      var nm = layers[i];",
+      "      if(labelByName[nm]){",
+      "        firstLabel = labelByName[nm];",
+      "        break;",
+      "      }",
+      "    }",
+      "    if(!firstLabel) return;",
+      "    var heading = document.createElement('div');",
+      "    heading.className = 'overlay-section-heading';",
+      "    heading.textContent = sectionName;",
+      "    heading.style.fontWeight = '600';",
+      "    heading.style.margin = '8px 0 4px 0';",
+      "    heading.style.paddingTop = '6px';",
+      "    heading.style.borderTop = '1px solid rgba(0,0,0,0.15)';",
+      "    heading.style.textAlign = 'left';",
+      "    overlays.insertBefore(heading, firstLabel);",
+      "  });",
+      "}",
+      "",
+      "function makeLegendsScrollable(){",
+      "  var maxH = Math.max(120, Math.floor(el.getBoundingClientRect().height * 0.5));",
+      "  var legendsNodes = el.querySelectorAll('details[id^=\"legend-\"]');",
+      "  legendsNodes.forEach(function(d){",
+      "    d.style.maxHeight = maxH + 'px';",
+      "    d.style.overflowY = 'auto';",
+      "    d.style.overflowX = 'hidden';",
+      "    var sum = d.querySelector('summary');",
+      "    if(sum){",
+      "      sum.style.position = 'sticky';",
+      "      sum.style.top = '0';",
+      "      sum.style.background = 'white';",
+      "      sum.style.zIndex = '1';",
+      "    }",
+      "  });",
+      "}",
+      "",
+      "Object.keys(legends).forEach(function(layerName){",
+      "  showByLayer(layerName, false);",
+      "});",
+      "",
+      "requestAnimationFrame(function(){",
+      "  requestAnimationFrame(function(){",
+      "    addBaseHeadingOnce();",
+      "    insertOverlaySectionHeadings();",
+      "    makeLegendsScrollable();",
+      "    syncFromLayerControl();",
+      "  });",
+      "});",
+      "",
+      "map.on('click', function(e){",
+      "  if(activeMarker){",
+      "    map.removeLayer(activeMarker);",
+      "  }",
+      "  activeMarker = L.marker(e.latlng, {pane: 'markerPane'}).addTo(map);",
+      "  activeMarker.bindPopup(makeMarkerPopup(e.latlng)).openPopup();",
+      "});",
+      "",
+      "map.on('overlayadd', function(e){ showByLayer(e.name, true); updateMarkerPopup(); });",
+      "map.on('overlayremove', function(e){ showByLayer(e.name, false); updateMarkerPopup(); });",
+      "",
+      "map.on('layeradd layerremove', function(){",
+      "  addBaseHeadingOnce();",
+      "  insertOverlaySectionHeadings();",
+      "  makeLegendsScrollable();",
+      "  syncFromLayerControl();",
+      "  updateMarkerPopup();",
+      "});",
+      "",
+      "window.addEventListener('resize', function(){",
+      "  makeLegendsScrollable();",
+      "});",
+      "}"
+    ),
+    data = payload
     )
 }
+

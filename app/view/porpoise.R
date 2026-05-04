@@ -38,13 +38,14 @@ box::use(
   leaflet[
     leafletOutput,
     renderLeaflet,
+    leafletProxy,
     colorNumeric,
     addMapPane,
     addPolygons,
     addCircleMarkers,
     addLegend,
-    addLayersControl,
-    layersControlOptions,
+    hideGroup,
+    showGroup,
     pathOptions
   ],
   leaflet.extras[
@@ -100,6 +101,12 @@ mod_porpoise_ui <- function(id) {
   )
 }
 
+porpoise_overlay_groups <- c(
+  "SCANS IV Porpoise Density",
+  "POD Location",
+  "draw"
+)
+
 mod_porpoise_server <- function(
   id,
   SCANS_shape,
@@ -107,7 +114,8 @@ mod_porpoise_server <- function(
   PAM_data,
   PAM_grd,
   POD_locations,
-  base_map_fun
+  base_map_fun,
+  selected_layers = reactive(NULL)
 ) {
   moduleServer(id, function(input, output, session) {
     # colors
@@ -175,23 +183,23 @@ mod_porpoise_server <- function(
         editOptions = editToolbarOptions(
           selectedPathOptions = selectedPathOptions()
         )
-      ) |>
-      # Allow toggling overlays
-      addLayersControl(
-        baseGroups = c(
-          "CartoDB.Positron",
-          "Open Street Map",
-          "EMODnet Bathymetry"
-        ),
-        overlayGroups = c("SCANS IV Porpoise Density", "POD Location", "draw"),
-        options = layersControlOptions(collapsed = FALSE),
-        position = "bottomleft"
       )
 
     # ---- Render the map ----
     output$map <- renderLeaflet({
       porp_map
     })
+
+    observeEvent(selected_layers(), {
+      proxy <- leafletProxy("map", session = session)
+      selected <- selected_layers()
+      matched <- intersect(selected, porpoise_overlay_groups)
+
+      if (length(matched)) {
+        proxy %>% hideGroup(porpoise_overlay_groups)
+        proxy %>% showGroup(matched)
+      }
+    }, ignoreNULL = FALSE)
 
     # ---- Spatial edit/selection handling ----  for old map
     # edits <- callModule(editMod, "editor", porp_map)
