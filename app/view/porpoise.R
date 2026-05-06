@@ -71,20 +71,20 @@ mod_porpoise_ui <- function(id) {
       navset_card_tab(
         nav_panel(
           title = "Detection Positive Hours per Day",
-          plotOutput("dph_plot", height = "600px")
+          plotOutput(ns("dph_plot"), height = "600px")
         ),
         nav_panel(
           title = "Daily Distribution of Detections",
-          plotOutput("diurnal_plot", height = "650px")
+          plotOutput(ns("diurnal_plot"), height = "650px")
         )
         # ,
         # nav_panel(title = 'Pressure Curve?', p('TBD'))
       ),
-      card(card_header("Station Details"), tableOutput("station_table")),
+      card(card_header("Station Details"), tableOutput(ns("station_table"))),
       card(
         card_header("Settings"),
         sliderInput(
-          "YMselect",
+          ns("YMselect"),
           "Dates:",
           min = as.Date("2015-01-01", "%Y-%m-%d"),
           max = as.Date(Sys.Date(), "%Y-%m-%d"),
@@ -93,7 +93,7 @@ mod_porpoise_ui <- function(id) {
             as.Date(Sys.Date(), "%Y-%m-%d")
           )
         ),
-        imageOutput("logo"),
+        imageOutput(ns("logo"))
       ), ## Update this if older data is incorporated
       col_widths = c(6, 6, 8, 4),
       # row_heights = c(3,1)
@@ -344,16 +344,20 @@ mod_porpoise_server <- function(
 
     # Example output: print selected data structure
     output$dph_plot <- renderPlot({
-      req(filtered_data())
+      data <- filtered_data()
+      req(nrow(data) > 0)
       # print(str(selected_data()))
-      DPHpDPDplot(filtered_data())
+      DPHpDPDplot(data)
     })
 
     output$diurnal_plot <- renderPlot({
-      req(filtered_data())
-      req(selectLocs)
+      data <- filtered_data()
+      locations <- selectLocs()
+      req(nrow(data) > 0)
+      req(any(data$PPM == 1, na.rm = TRUE))
+      req(nrow(locations) > 0)
       # print(str(selected_data()))
-      diurnalPlot(filtered_data(), selectLocs())
+      diurnalPlot(data, locations)
     })
 
     output$logo <- renderImage(

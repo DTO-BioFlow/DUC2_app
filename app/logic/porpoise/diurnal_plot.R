@@ -11,7 +11,7 @@
 ##################################################################################
 
 box::use(
-  lubridate[day],
+  grDevices[colorRampPalette],
   suntools[sunriset],
   ggplot2[
     ggplot,
@@ -35,8 +35,7 @@ diurnalPlot = function(dataIn, selectLocs) {
 
   #Get all days in subset
   dates = unique(as.Date(data$datetime, tz = 'UTC'))
-  dates = append(min(dates) - day(1), dates)
-  dates = append(max(dates) + day(1), dates)
+  dates = c(min(dates) - 1, dates, max(dates) + 1)
 
   dates = dates[order(dates)]
 
@@ -64,9 +63,9 @@ diurnalPlot = function(dataIn, selectLocs) {
   names(solarTimes) = selectLocs$Station
 
   allNT = NULL
-  for (nt in 1:length(solarTimes)) {
+  for (nt in seq_along(solarTimes)) {
     stationData = data[data$Station == names(solarTimes[nt]), ]
-    if (length(stationData) == 0) {
+    if (nrow(stationData) == 0) {
       next
     }
 
@@ -74,7 +73,7 @@ diurnalPlot = function(dataIn, selectLocs) {
     # Normalize the time between sunset and sunrise (-1 - 0) and sunrise and sunset (0 - 1) via linear interpolation.
 
     normalizedTime = NULL
-    for (dd in 1:length(xdidc)) {
+    for (dd in seq_along(xdidc)) {
       sunR = solarTimes[[nt]][, 1]
       sunS = solarTimes[[nt]][, 2]
 

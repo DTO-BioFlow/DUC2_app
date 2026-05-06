@@ -11,7 +11,7 @@
 
 box::use(
   lubridate[year, month],
-  dplyr[group_by, summarize, mutate, tally],
+  dplyr[group_by, summarize, mutate, tally, n],
   Rmisc[CI],
   ggplot2[
     ggplot,
