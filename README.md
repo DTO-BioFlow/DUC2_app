@@ -179,12 +179,13 @@ mod_mynewspecies_ui <- function(id) {
 
 # Server Function
 mod_mynewspecies_server <- function(id, 
-                                     data,           # Data parameter
-                                     base_map_fun) { # Function parameter
+                                     data           # Data parameter
+                                     ) 
+                                     {
   moduleServer(id, function(input, output, session) {
     
     output$map <- renderLeaflet({
-      base_map_fun() |>
+      make_base_map |>
         addMarkers(data = data, ~lon, ~lat)
     })
     
@@ -220,7 +221,6 @@ server <- function(input, output, session) {
   mod_mynewspecies_server(
     "mynewspecies",
     data = my_species_data,           # Pass data
-    base_map_fun = make_base_map      # Pass functions
   )
 }
 ```
@@ -262,7 +262,7 @@ mod_seabass_migration_server <- function(id, base_map_fun) {
   moduleServer(id, function(input, output, session) {
     
     output$map <- renderLeaflet({
-      base_map_fun()  # ← Call the function
+      make_base_map  # ← Call the function
     })
   })
 }

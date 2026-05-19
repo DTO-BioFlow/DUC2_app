@@ -27,6 +27,7 @@ box::use(
   ],
   leaflet.minicharts[addFlows, popupArgs],
   htmltools[HTML],
+  app / logic / maps[make_base_map],
   dplyr[
     arrange,
     count,
@@ -76,8 +77,7 @@ mod_seabass_network_analysis_ui <- function(id) {
 
 mod_seabass_network_analysis_server <- function(
   id,
-  detections,
-  base_map_fun
+  detections
 ) {
   moduleServer(id, function(input, output, session) {
     network_data <- prep_network_analysis_data(detections)
@@ -220,7 +220,7 @@ mod_seabass_network_analysis_server <- function(
       stations_m <- current_station_points()
       flows_m <- current_flows()
 
-      map <- base_map_fun() |>
+      map <- make_base_map() |>
         addCircleMarkers(
           data = network_data$stations,
           lng = ~lon,

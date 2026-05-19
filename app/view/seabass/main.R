@@ -51,7 +51,6 @@ mod_seabass_server <- function(
   TEL_deployments,
   TEL_detections,
   etn_monthyear_individual_sum,
-  base_map_fun,
   prep_minicharts_inputs_fun
 ) {
   moduleServer(id, function(input, output, session) {
@@ -65,22 +64,18 @@ mod_seabass_server <- function(
     mod_seabass_telemetry_data_server(
       "telemetry_data",
       prepped_data = prepped_data,
-      etn_monthyear_individual_sum = etn_monthyear_individual_sum,
-      base_map_fun = base_map_fun
+      etn_monthyear_individual_sum = etn_monthyear_individual_sum
     )
 
     mod_seabass_network_analysis_server(
       "network_analysis",
-      detections = TEL_detections,
-      base_map_fun = base_map_fun
+      detections = TEL_detections
     )
 
     # # Environmental submodule
     # mod_seabass_env_server(
     #   "env",
     #   wms_layers = wms_layers,         # Use parameter name
-    #   base_map_fun = base_map_fun,     # Use parameter name
-    #   env_map_fun = make_env_wms_map_fun  # Use parameter name
     # )
   })
 }

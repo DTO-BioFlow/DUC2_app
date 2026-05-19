@@ -25,11 +25,10 @@ box::use(
     addControl,
     addLegend,
     colorNumeric,
-    labelOptions,
-    leafletProxy,
-    clearGroup
+    labelOptions
   ],
   htmltools[HTML],
+  app / logic / maps[make_base_map],
   dplyr[
     mutate,
     filter,
@@ -73,8 +72,7 @@ mod_seabass_telemetry_ui <- function(id) {
 mod_seabass_telemetry_data_server <- function(
   id,
   prepped_data,
-  etn_monthyear_individual_sum,
-  base_map_fun
+  etn_monthyear_individual_sum
 ) {
   moduleServer(id, function(input, output, session) {
     stations <- prepped_data$stations
@@ -114,6 +112,7 @@ mod_seabass_telemetry_data_server <- function(
     })
 
     current_month <- reactive({
+      req(length(months) > 0)
       months[current_month_index()]
     })
 
@@ -141,10 +140,6 @@ mod_seabass_telemetry_data_server <- function(
           )
         )
     }
-
-    current_bubbles <- reactive({
-      bubble_data_for_month(current_month())
-    })
 
     output$month_summary <- renderUI({
       m <- current_month()
@@ -239,9 +234,9 @@ mod_seabass_telemetry_data_server <- function(
     })
 
     output$map <- renderLeaflet({
-      initial_bubbles <- bubble_data_for_month(months[1])
+      bubbles_m <- bubble_data_for_month(current_month())
 
-      map <- base_map_fun() |>
+      map <- make_base_map() |>
         addCircleMarkers(
           data = stations,
           lng = ~lon,
@@ -252,95 +247,57 @@ mod_seabass_telemetry_data_server <- function(
           fillColor = "#666666",
           group = "Receiver stations",
           popup = ~paste0("<b>", station_name, "</b>")
-        ) |>
+        )
+
+      if (nrow(bubbles_m) > 0) {
+        map <- map |>
+          addCircleMarkers(
+            data = bubbles_m,
+            lng = ~lon,
+            lat = ~lat,
+            radius = ~radius,
+            stroke = TRUE,
+            color = "#003f5c",
+            weight = 1,
+            fillOpacity = 0.85,
+            fillColor = ~detection_pal(n_station),
+            label = ~marker_label,
+            labelOptions = labelOptions(
+              noHide = TRUE,
+              direction = "center",
+              textOnly = TRUE,
+              style = list(
+                "font-weight" = "700",
+                "font-size" = "11px",
+                "color" = "#111827"
+              )
+            ),
+            popup = ~popup
+          ) |>
+          addLegend(
+            position = "bottomleft",
+            pal = detection_pal,
+            values = anim_df$n_station,
+            title = "Detections",
+            opacity = 1
+          )
+      }
+
+      map |>
         addControl(
           html = HTML(
             paste0(
               "<div style='background:white;padding:6px 8px;",
               "box-shadow:0 1px 4px rgba(0,0,0,0.25);'>",
               "<b>Detection map</b><br>",
-              "Point colour shows detections per station ",
+              "Point colour and label show detections per station ",
               "in the selected month.",
               "</div>"
             )
           ),
           position = "bottomright"
-        ) |>
-        addLegend(
-          position = "bottomleft",
-          pal = detection_pal,
-          values = anim_df$n_station,
-          title = "Detections",
-          opacity = 1
-        )
-
-      if (nrow(initial_bubbles) == 0) {
-        return(map)
-      }
-
-      map |>
-        addCircleMarkers(
-          data = initial_bubbles,
-          lng = ~lon,
-          lat = ~lat,
-          radius = ~radius,
-          stroke = TRUE,
-          color = "#003f5c",
-          weight = 1,
-          fillOpacity = 0.85,
-          fillColor = ~detection_pal(n_station),
-          group = "Detection proportion",
-          label = ~marker_label,
-          labelOptions = labelOptions(
-            noHide = TRUE,
-            direction = "center",
-            textOnly = TRUE,
-            style = list(
-              "font-weight" = "700",
-              "font-size" = "11px",
-              "color" = "#111827"
-            )
-          ),
-          popup = ~popup
         )
     })
-
-    observeEvent(current_month(), {
-      data <- current_bubbles()
-
-      proxy <- leafletProxy("map", session = session) |>
-        clearGroup("Detection proportion")
-
-      if (nrow(data) == 0) {
-        return()
-      }
-
-      proxy |>
-        addCircleMarkers(
-          data = data,
-          lng = ~lon,
-          lat = ~lat,
-          radius = ~radius,
-          stroke = TRUE,
-          color = "#003f5c",
-          weight = 1,
-          fillOpacity = 0.85,
-          fillColor = ~detection_pal(n_station),
-          group = "Detection proportion",
-          label = ~marker_label,
-          labelOptions = labelOptions(
-            noHide = TRUE,
-            direction = "center",
-            textOnly = TRUE,
-            style = list(
-              "font-weight" = "700",
-              "font-size" = "11px",
-              "color" = "#111827"
-            )
-          ),
-          popup = ~popup
-        )
-    }, ignoreInit = TRUE)
 
     observeEvent(input$prev_month, {
       i <- max(1, current_month_index() - 1)

@@ -88,13 +88,15 @@ mod_habitat_suitability_ui <- function(id) {
   )
 }
 
-
+box::use(
+  app / logic / maps[make_base_map]
+)
 # server  -----------------------------------------------------------------
 
 mod_habitat_suitability_server <- function(
   id,
-  base_map_fun,
-  habitat_data = NULL
+  habitat_data = NULL,
+  sidebar_layers = NULL
 ) {
   moduleServer(id, function(input, output, session) {
     present_decade_labels <- c("2000-2009", "2010-2019")
@@ -211,8 +213,7 @@ mod_habitat_suitability_server <- function(
 
     # Initialize base map
     output$habitat_map <- renderLeaflet({
-      req(base_map_fun)
-      base_map_fun() |>
+      make_base_map() |>
         setView(lat = 51.5, lng = 2.5, zoom = 8)
     })
 

@@ -34,6 +34,9 @@ box::use(
   terra[values]
 )
 
+box::use(
+  app / logic / maps[make_base_map]
+)
 # ui ----------------------------------------------------------------------
 
 mod_lagrangian_connectivity_ui <- function(id) {
@@ -47,7 +50,6 @@ mod_lagrangian_connectivity_ui <- function(id) {
 
 mod_lagrangian_connectivity_server <- function(
   id,
-  base_map_fun,
   connectivity_data = NULL,
   sidebar_layers = NULL
 ) {
@@ -55,8 +57,7 @@ mod_lagrangian_connectivity_server <- function(
     
     # Initialize base map
     output$connectivity_map <- renderLeaflet({
-      req(base_map_fun)
-      base_map_fun() |>
+      make_base_map() |>
         setView(lat = 51.5, lng = 2.5, zoom = 8)
     })
 
