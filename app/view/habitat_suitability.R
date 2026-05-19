@@ -42,12 +42,13 @@ mod_habitat_suitability_ui <- function(id) {
   leafletOutput(ns("habitat_map"), height = 700)
 }
 
-
+box::use(
+  app / logic / maps[make_base_map]
+)
 # server  -----------------------------------------------------------------
 
 mod_habitat_suitability_server <- function(
   id,
-  base_map_fun,
   habitat_data = NULL,
   sidebar_layers = NULL
 ) {
@@ -55,8 +56,7 @@ mod_habitat_suitability_server <- function(
     
     # Initialize base map
     output$habitat_map <- renderLeaflet({
-      req(base_map_fun)
-      base_map_fun() |>
+      make_base_map() |>
         setView(lat = 51.5, lng = 2.5, zoom = 8)
     })
 

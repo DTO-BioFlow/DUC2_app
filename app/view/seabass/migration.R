@@ -72,11 +72,14 @@ mod_seabass_migration_ui <- function(id) {
   )
 }
 
+box::use(
+  app / logic / maps[make_base_map]
+)
 
 # make the map ------------------------------------------------------------
 
-render_migration_map <- function(r, pal, base_map_fun) {
-  base_map_fun() |>
+render_migration_map <- function(r, pal) {
+  make_base_map() |>
     setView(lat = 51.5, lng = 2.5, zoom = 8) |>
     addRasterImage(r, colors = pal, opacity = 0.8, layerId = "raster") |>
     addLegend(pal = pal, values = values(r), title = "Raster value")
@@ -85,7 +88,7 @@ render_migration_map <- function(r, pal, base_map_fun) {
 
 # server  -----------------------------------------------------------------
 
-mod_seabass_migration_server <- function(id, telemetry_gam_s3, base_map_fun) {
+mod_seabass_migration_server <- function(id, telemetry_gam_s3) {
   moduleServer(id, function(input, output, session) {
     output$month_label <- renderText({
       req(input$month)
@@ -118,8 +121,7 @@ mod_seabass_migration_server <- function(id, telemetry_gam_s3, base_map_fun) {
       req(input$month)
       render_migration_map(
         r = current_raster_stack()[[input$month]],
-        pal = current_palette(),
-        base_map_fun = base_map_fun
+        pal = current_palette()
       )
     })
 

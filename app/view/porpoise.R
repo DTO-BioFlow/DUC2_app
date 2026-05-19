@@ -62,6 +62,10 @@ box::use(
   app / logic / porpoise / dph_dpd_plot[DPHpDPDplot]
 )
 
+box::use(
+  app / logic / maps[make_base_map]
+)
+
 mod_porpoise_ui <- function(id) {
   ns <- NS(id)
 
@@ -114,7 +118,6 @@ mod_porpoise_server <- function(
   PAM_data,
   PAM_grd,
   POD_locations,
-  base_map_fun,
   selected_layers = reactive(NULL)
 ) {
   moduleServer(id, function(input, output, session) {
@@ -129,7 +132,7 @@ mod_porpoise_server <- function(
     data_of_click <- reactiveValues(clickedMarker = list())
 
     # ---- BUILD HP MAP
-    porp_map <- base_map_fun(lng = 3, lat = 51.5, zoom = 8) |>
+    porp_map <- make_base_map(lng = 3, lat = 51.5, zoom = 8) |>
       addMapPane("dataPane", zIndex = 410) |>
       # Density polygons (SCANS IV)
       addPolygons(

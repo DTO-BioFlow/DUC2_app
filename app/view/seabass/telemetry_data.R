@@ -70,8 +70,7 @@ mod_seabass_telemetry_ui <- function(id) {
 mod_seabass_telemetry_data_server <- function(
   id,
   prepped_data,
-  etn_monthyear_individual_sum,
-  base_map_fun
+  etn_monthyear_individual_sum
 ) {
   moduleServer(id, function(input, output, session) {
     stations <- prepped_data$stations
@@ -229,10 +228,13 @@ mod_seabass_telemetry_data_server <- function(
       )
     })
 
+box::use(
+  app / logic / maps[make_base_map]
+)
     output$map <- renderLeaflet({
       initial_bubbles <- bubble_data_for_month(months[1])
 
-      map <- base_map_fun() |>
+      map <- make_base_map() |>
         addCircleMarkers(
           data = stations,
           lng = ~lon,

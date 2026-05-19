@@ -5,28 +5,23 @@ box::use(
     moduleServer,
     tagList,
     tags,
-    a,
-    actionLink,
-    checkboxGroupInput,
+    addResourcePath,
     reactive
   ],
   bslib[
     page_navbar,
     nav_panel,
-    accordion,
-    accordion_panel,
-    layout_sidebar,
-    sidebar,
-    navset_pill
+    navbar_options,
+    navset_pill,
   ],
-  bsicons[bs_icon]
+  htmltools[HTML],
+  glue[glue],
 )
 #import internal modules
 box::use(
   app /
     logic /
     config[dto_colors, bioflow_url, bioflow_duc2_url],
-  app / logic / maps[make_base_map, make_env_wms_map],
   app / logic / stac_data[load_STAC_metadata],
   app /
     logic /
@@ -40,7 +35,7 @@ box::use(
   app / view / lagrangian_connectivity[mod_lagrangian_connectivity_ui, mod_lagrangian_connectivity_server]
 )
 
-shiny::addResourcePath(
+addResourcePath(
   "assets",
   normalizePath(file.path("app", "static"), mustWork = TRUE)
 )
@@ -60,630 +55,6 @@ etn_monthyear_individual_sum <- build_monthyear_rds(
 #' @export
 ui <- function(id) {
   ns <- NS(id)
-  owf_info <- bslib::popover(
-    actionLink(
-      ns("owf_info"),
-      label = bsicons::bs_icon("info-circle")
-    ),
-    "Here's a ",
-    a("hyperlink", href = "https://google.com")
-  )
-
-  accordion_filters <- bslib::accordion(
-    bslib::accordion_panel(
-      "Human Activities layers", icon = bsicons::bs_icon("building"),
-      checkboxGroupInput(
-        ns("human_activities_layers_sidebar"),
-        NULL,
-        choiceNames = list(
-          tags$span(
-            class = "d-inline-flex align-items-center gap-1",
-            tags$span("Offshore Wind Farms (OWF)"),
-            owf_info
-          ),
-          tags$span(
-            class = "d-inline-flex align-items-center gap-1",
-            tags$span("Submarine Power Cables (SPC)"),
-            bslib::popover(
-              actionLink(
-                ns("spc_info"),
-                label = "",
-                icon = bsicons::bs_icon(
-                  "info-circle",
-                  title = "More information about Submarine Power Cables (SPC)"
-                )
-              ),
-              tags$p(
-                class = "mb-2",
-                "Layer metadata and source details for submarine power cables."
-              ),
-              tags$a(
-                "Learn more",
-                href = wms_layers$spc$wms_link[[1]],
-                target = "_blank",
-                rel = "noopener"
-              ),
-              title = "Submarine Power Cables (SPC)",
-              placement = "right",
-              options = list(container = "body")
-            )
-          ),
-          tags$span(
-            class = "d-inline-flex align-items-center gap-1",
-            tags$span("Marine Spatial Plans"),
-            bslib::popover(
-              actionLink(
-                ns("msp_info"),
-                label = "",
-                icon = bsicons::bs_icon(
-                  "info-circle",
-                  title = "More information about Marine Spatial Plans"
-                )
-              ),
-              tags$p(
-                class = "mb-2",
-                "Layer metadata and source details for marine spatial planning zones."
-              ),
-              tags$a(
-                "Learn more",
-                href = wms_layers$msp$wms_link[[1]],
-                target = "_blank",
-                rel = "noopener"
-              ),
-              title = "Marine Spatial Plans",
-              placement = "right",
-              options = list(container = "body")
-            )
-          ),
-          tags$span(
-            class = "d-inline-flex align-items-center gap-1",
-            tags$span("Sea convention polygons"),
-            bslib::popover(
-              actionLink(
-                ns("sea_conventions_info"),
-                label = "",
-                icon = bsicons::bs_icon(
-                  "info-circle",
-                  title = "More information about Sea convention polygons"
-                )
-              ),
-              tags$p(
-                class = "mb-2",
-                "Layer metadata and source details for sea convention polygons."
-              ),
-              tags$a(
-                "Learn more",
-                href = wms_layers$sea_conventions$wms_link[[1]],
-                target = "_blank",
-                rel = "noopener"
-              ),
-              title = "Sea convention polygons",
-              placement = "right",
-              options = list(container = "body")
-            )
-          ),
-          tags$span(
-            class = "d-inline-flex align-items-center gap-1",
-            tags$span("Shipwrecks"),
-            bslib::popover(
-              actionLink(
-                ns("shipwrecks_info"),
-                label = "",
-                icon = bsicons::bs_icon(
-                  "info-circle",
-                  title = "More information about Shipwrecks"
-                )
-              ),
-              tags$p(
-                class = "mb-2",
-                "Layer metadata and source details for shipwreck locations."
-              ),
-              tags$a(
-                "Learn more",
-                href = wms_layers$shipwrecks_emodnet$wms_link[[1]],
-                target = "_blank",
-                rel = "noopener"
-              ),
-              title = "Shipwrecks",
-              placement = "right",
-              options = list(container = "body")
-            )
-          )
-        ),
-        choiceValues = c(
-          "Offshore Wind Farms (OWF)",
-          "Submarine Power Cables (SPC)",
-          "Marine Spatial Plans",
-          "Sea convention polygons",
-          "Shipwrecks"
-        )
-      )
-    ),
-    bslib::accordion_panel(
-      "Natural layers", icon = bsicons::bs_icon("water"),
-      checkboxGroupInput(
-        ns("natural_layers_sidebar"),
-        NULL,
-        choiceNames = list(
-          tags$span(
-            class = "d-inline-flex align-items-center gap-1",
-            tags$span("Bathymetry (multicolor)"),
-            bslib::popover(
-              actionLink(
-                ns("bathy_multicolor_info"),
-                label = "",
-                icon = bsicons::bs_icon(
-                  "info-circle",
-                  title = "More information about Bathymetry (multicolor)"
-                )
-              ),
-              tags$p(
-                class = "mb-2",
-                "Layer metadata and source details for multicolor bathymetry."
-              ),
-              tags$a(
-                "Learn more",
-                href = wms_layers$bathy_multicolor$wms_link[[1]],
-                target = "_blank",
-                rel = "noopener"
-              ),
-              title = "Bathymetry (multicolor)",
-              placement = "right",
-              options = list(container = "body")
-            )
-          ),
-          tags$span(
-            class = "d-inline-flex align-items-center gap-1",
-            tags$span("Seabed habitats"),
-            bslib::popover(
-              actionLink(
-                ns("seabed_habitats_info"),
-                label = "",
-                icon = bsicons::bs_icon(
-                  "info-circle",
-                  title = "More information about Seabed habitats"
-                )
-              ),
-              tags$p(
-                class = "mb-2",
-                "Layer metadata and source details for seabed habitat classes."
-              ),
-              tags$a(
-                "Learn more",
-                href = wms_layers$seabedhabitats$wms_link[[1]],
-                target = "_blank",
-                rel = "noopener"
-              ),
-              title = "Seabed habitats",
-              placement = "right",
-              options = list(container = "body")
-            )
-          ),
-          tags$span(
-            class = "d-inline-flex align-items-center gap-1",
-            tags$span("Seabed substrates"),
-            bslib::popover(
-              actionLink(
-                ns("seabed_substrates_info"),
-                label = "",
-                icon = bsicons::bs_icon(
-                  "info-circle",
-                  title = "More information about Seabed substrates"
-                )
-              ),
-              tags$p(
-                class = "mb-2",
-                "Layer metadata and source details for seabed substrate classes."
-              ),
-              tags$a(
-                "Learn more",
-                href = wms_layers$seabedsubstrates$wms_link[[1]],
-                target = "_blank",
-                rel = "noopener"
-              ),
-              title = "Seabed substrates",
-              placement = "right",
-              options = list(container = "body")
-            )
-          )
-        ),
-        choiceValues = c(
-          "Bathymetry (multicolor)",
-          "Seabed habitats",
-          "Seabed substrates"
-        )
-      )
-    ),
-    bslib::accordion_panel(
-      "Habitat Suitability", icon = bsicons::bs_icon("layers"),
-      bslib::accordion(
-        bslib::accordion_panel(
-          title = "harbour porpoise",
-          value = "harbour_porpoise",
-          checkboxGroupInput(
-            ns("habitat_harbour_porpoise_sidebar"),
-            NULL,
-            choiceNames = list(
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("present monthly"),
-                bslib::popover(
-                  actionLink(
-                    ns("harbour_porpoise_present_monthly_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about harbour porpoise present monthly"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Monthly present-day habitat suitability output for harbour porpoise."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "harbour porpoise: present monthly",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ),
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("present decade"),
-                bslib::popover(
-                  actionLink(
-                    ns("harbour_porpoise_present_decade_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about harbour porpoise present decade"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Decadal present-day habitat suitability output for harbour porpoise."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "harbour porpoise: present decade",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ),
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("future decade"),
-                bslib::popover(
-                  actionLink(
-                    ns("harbour_porpoise_future_decade_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about harbour porpoise future decade"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Decadal future habitat suitability output for harbour porpoise."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "harbour porpoise: future decade",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              )
-            ),
-            choiceValues = c(
-              "harbour_porpoise_present_monthly",
-              "harbour_porpoise_present_decade",
-              "harbour_porpoise_future_decade"
-            )
-          )
-        ),
-        bslib::accordion_panel(
-          title = "Bottlenose dolphin",
-          value = "bottlenose_dolphin",
-          checkboxGroupInput(
-            ns("habitat_bottlenose_dolphin_sidebar"),
-            NULL,
-            choiceNames = list(
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("present monthly"),
-                bslib::popover(
-                  actionLink(
-                    ns("bottlenose_dolphin_present_monthly_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Bottlenose dolphin present monthly"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Monthly present-day habitat suitability output for Bottlenose dolphin."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Bottlenose dolphin: present monthly",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ),
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("present decade"),
-                bslib::popover(
-                  actionLink(
-                    ns("bottlenose_dolphin_present_decade_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Bottlenose dolphin present decade"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Decadal present-day habitat suitability output for Bottlenose dolphin."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Bottlenose dolphin: present decade",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ),
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("future decade"),
-                bslib::popover(
-                  actionLink(
-                    ns("bottlenose_dolphin_future_decade_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Bottlenose dolphin future decade"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Decadal future habitat suitability output for Bottlenose dolphin."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Bottlenose dolphin: future decade",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              )
-            ),
-            choiceValues = c(
-              "bottlenose_dolphin_present_monthly",
-              "bottlenose_dolphin_present_decade",
-              "bottlenose_dolphin_future_decade"
-            )
-          )
-        ),
-        bslib::accordion_panel(
-          title = "Common dolphin",
-          value = "common_dolphin",
-          checkboxGroupInput(
-            ns("habitat_common_dolphin_sidebar"),
-            NULL,
-            choiceNames = list(
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("present monthly"),
-                bslib::popover(
-                  actionLink(
-                    ns("common_dolphin_present_monthly_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Common dolphin present monthly"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Monthly present-day habitat suitability output for Common dolphin."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Common dolphin: present monthly",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ),
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("present decade"),
-                bslib::popover(
-                  actionLink(
-                    ns("common_dolphin_present_decade_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Common dolphin present decade"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Decadal present-day habitat suitability output for Common dolphin."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Common dolphin: present decade",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ),
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("future decade"),
-                bslib::popover(
-                  actionLink(
-                    ns("common_dolphin_future_decade_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Common dolphin future decade"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Decadal future habitat suitability output for Common dolphin."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Common dolphin: future decade",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              )
-            ),
-            choiceValues = c(
-              "common_dolphin_present_monthly",
-              "common_dolphin_present_decade",
-              "common_dolphin_future_decade"
-            )
-          )
-        ),
-        bslib::accordion_panel(
-          title = "Harbour Seal",
-          value = "harbour_seal",
-          checkboxGroupInput(
-            ns("habitat_harbour_seal_sidebar"),
-            NULL,
-            choiceNames = list(
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("present monthly"),
-                bslib::popover(
-                  actionLink(
-                    ns("harbour_seal_present_monthly_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Harbour Seal present monthly"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Monthly present-day habitat suitability output for Harbour Seal."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Harbour Seal: present monthly",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ),
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("present decade"),
-                bslib::popover(
-                  actionLink(
-                    ns("harbour_seal_present_decade_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Harbour Seal present decade"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Decadal present-day habitat suitability output for Harbour Seal."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Harbour Seal: present decade",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ),
-              tags$span(
-                class = "d-inline-flex align-items-center gap-1",
-                tags$span("future decade"),
-                bslib::popover(
-                  actionLink(
-                    ns("harbour_seal_future_decade_info"),
-                    label = "",
-                    icon = bsicons::bs_icon(
-                      "info-circle",
-                      title = "More information about Harbour Seal future decade"
-                    )
-                  ),
-                  tags$p(
-                    class = "mb-2",
-                    "Decadal future habitat suitability output for Harbour Seal."
-                  ),
-                  tags$a(
-                    "Learn more",
-                    href = bioflow_duc2_url,
-                    target = "_blank",
-                    rel = "noopener"
-                  ),
-                  title = "Harbour Seal: future decade",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              )
-            ),
-            choiceValues = c(
-              "harbour_seal_present_monthly",
-              "harbour_seal_present_decade",
-              "harbour_seal_future_decade"
-            )
-          )
-        )
-      )
-    )
-  )
   page_navbar(
     title = tagList(
       tags$a(
@@ -704,7 +75,7 @@ ui <- function(id) {
     ),
     id = ns("tabsetPanelID"),
     header = tags$head(
-      tags$style(htmltools::HTML(glue::glue(
+      tags$style(HTML(glue(
         "\
       :root {{
         --blue-light: {dto_colors$blue_light};
@@ -716,7 +87,7 @@ ui <- function(id) {
       tags$link(rel = "stylesheet", type = "text/css", href = "assets/css/app.min.css")
     ),
     window_title = "Marine life habitat use in potential offshore infrastructure areas",
-    navbar_options = bslib::navbar_options(
+    navbar_options = navbar_options(
       bg = "var(--blue-light)",
       theme = "light",
       underline = TRUE
@@ -736,19 +107,9 @@ ui <- function(id) {
         style = "font-size: 16px; vertical-align:middle;"
       ),
       class = "lower-level-tabs",
-      bslib::layout_sidebar(
-        sidebar = bslib::sidebar(
-          width = 320,
-          open = "desktop",
-          title = "Layers",
-          accordion_filters
-        ),
-        mod_env_ui(
-          ns("env"),
-          base_map_fun = make_base_map,
-          make_env_wms_map_fun = make_env_wms_map,
-          wms_layers = wms_layers
-        )
+      mod_env_ui(
+        ns("env"),
+        wms_layers = wms_layers
       )
     ),
     nav_panel(
@@ -791,32 +152,11 @@ ui <- function(id) {
 #' @export
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
-    
-    # Create reactive expressions for sidebar layer selections
-    habitat_layers_reactive <- reactive({
-      selected_layers <- unlist(
-        list(
-          input$habitat_harbour_porpoise_sidebar,
-          input$habitat_bottlenose_dolphin_sidebar,
-          input$habitat_common_dolphin_sidebar,
-          input$habitat_harbour_seal_sidebar
-        ),
-        use.names = FALSE
-      )
-
-      if (is.null(selected_layers)) {
-        character(0)
-      } else {
-        selected_layers
-      }
-    })
-
     mod_home_server("home")
     mod_seabass_server(
       "seabass",
       TEL_deployments = TEL_deployments,
       etn_monthyear_individual_sum = etn_monthyear_individual_sum,
-      base_map_fun = make_base_map,
       prep_minicharts_inputs_fun = prep_minicharts_inputs
     )
     mod_porpoise_server(
@@ -825,23 +165,18 @@ server <- function(id) {
       POD_loc_sf = POD_loc_sf,
       PAM_data = PAM_data,
       PAM_grd = PAM_grd,
-      POD_locations = POD_locations,
-      base_map_fun = make_base_map
+      POD_locations = POD_locations
     )
-    mod_env_server(
+    env_layers <- mod_env_server(
       id = "env",
-      wms_layers = wms_layers,
-      base_map_fun = make_base_map,
-      make_env_wms_map_fun = make_env_wms_map
+      wms_layers = wms_layers
     )
     mod_habitat_suitability_server(
       id = "habitat_suitability",
-      base_map_fun = make_base_map,
-      sidebar_layers = habitat_layers_reactive
+      sidebar_layers = reactive(env_layers()$habitat_all)
     )
     mod_lagrangian_connectivity_server(
-      id = "lagrangian_connectivity",
-      base_map_fun = make_base_map
+      id = "lagrangian_connectivity"
     )
   })
 }
