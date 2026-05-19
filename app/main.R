@@ -7,8 +7,7 @@ box::use(
     tags,
     a,
     actionLink,
-    checkboxGroupInput,
-    reactive
+    checkboxGroupInput
   ],
   bslib[
     page_navbar,
@@ -25,9 +24,13 @@ box::use(
 box::use(
   app /
     logic /
-    config[dto_colors, bioflow_url, bioflow_duc2_url],
+    config[dto_colors, bioflow_url, bioflow_duc2_url, s3_bucket_habitatsuit_url],
   app / logic / maps[make_base_map, make_env_wms_map],
   app / logic / stac_data[load_STAC_metadata],
+  app /
+    logic /
+    hsuit /
+    habitat_suitability_s3[load_habitat_suitability_s3],
   app /
     logic /
     seabass /
@@ -47,6 +50,7 @@ shiny::addResourcePath(
 
 load(file.path("data", "DTO_DUC2_PpData.Rdata"))
 TEL_deployments <- readRDS(file.path("data", "TEL_deployments.rds"))
+TEL_detections <- readRDS(file.path("data", "TEL_detections.rds"))
 
 wms_layers <- load_STAC_metadata(
   metadata_csv = file.path("data", "EDITO_STAC_layers_metadata.csv")
@@ -55,6 +59,9 @@ etn_monthyear_individual_sum <- build_monthyear_rds(
   output_path = "etn_sum_seabass_monthyear_individual.rds",
   wms_layer_metadata = wms_layers,
   dataset_key = "seabass acoustic detections"
+)
+habitat_suitability_s3 <- load_habitat_suitability_s3(
+  s3_bucket_url = s3_bucket_habitatsuit_url
 )
 
 #' @export
@@ -791,30 +798,11 @@ ui <- function(id) {
 #' @export
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
-    
-    # Create reactive expressions for sidebar layer selections
-    habitat_layers_reactive <- reactive({
-      selected_layers <- unlist(
-        list(
-          input$habitat_harbour_porpoise_sidebar,
-          input$habitat_bottlenose_dolphin_sidebar,
-          input$habitat_common_dolphin_sidebar,
-          input$habitat_harbour_seal_sidebar
-        ),
-        use.names = FALSE
-      )
-
-      if (is.null(selected_layers)) {
-        character(0)
-      } else {
-        selected_layers
-      }
-    })
-
     mod_home_server("home")
     mod_seabass_server(
       "seabass",
       TEL_deployments = TEL_deployments,
+      TEL_detections = TEL_detections,
       etn_monthyear_individual_sum = etn_monthyear_individual_sum,
       base_map_fun = make_base_map,
       prep_minicharts_inputs_fun = prep_minicharts_inputs
@@ -837,7 +825,7 @@ server <- function(id) {
     mod_habitat_suitability_server(
       id = "habitat_suitability",
       base_map_fun = make_base_map,
-      sidebar_layers = habitat_layers_reactive
+      habitat_data = habitat_suitability_s3
     )
     mod_lagrangian_connectivity_server(
       id = "lagrangian_connectivity",

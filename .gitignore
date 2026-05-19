@@ -57,3 +57,4 @@ vignettes/*.pdf
 02_code/01_boosted_regression_trees/documentation/CopyOftemplate_formulas_files/
 
 .vscode/
+.positai

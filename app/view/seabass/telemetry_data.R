@@ -23,6 +23,9 @@ box::use(
     renderLeaflet,
     addCircleMarkers,
     addControl,
+    addLegend,
+    colorNumeric,
+    labelOptions,
     leafletProxy,
     clearGroup
   ],
@@ -77,6 +80,11 @@ mod_seabass_telemetry_data_server <- function(
     stations <- prepped_data$stations
     anim_df <- prepped_data$anim_df
     months <- prepped_data$months
+    detection_pal <- colorNumeric(
+      palette = c("#ffffcc", "#a1dab4", "#41b6c4", "#2c7fb8", "#253494"),
+      domain = anim_df$n_station,
+      na.color = "#d9d9d9"
+    )
 
     stopifnot(length(months) > 0)
 
@@ -119,7 +127,8 @@ mod_seabass_telemetry_data_server <- function(
         mutate(
           rel = pmax(rel, 0),
           rel_percent = 100 * rel,
-          radius = 5 + 45 * sqrt(rel),
+          radius = 12,
+          marker_label = as.character(n_station),
           popup = paste0(
             "<b>",
             station_name,
@@ -249,13 +258,20 @@ mod_seabass_telemetry_data_server <- function(
             paste0(
               "<div style='background:white;padding:6px 8px;",
               "box-shadow:0 1px 4px rgba(0,0,0,0.25);'>",
-              "<b>Bubble map</b><br>",
-              "Bubble area is proportional to each station's share ",
-              "of detections in the selected month.",
+              "<b>Detection map</b><br>",
+              "Point colour shows detections per station ",
+              "in the selected month.",
               "</div>"
             )
           ),
           position = "bottomright"
+        ) |>
+        addLegend(
+          position = "bottomleft",
+          pal = detection_pal,
+          values = anim_df$n_station,
+          title = "Detections",
+          opacity = 1
         )
 
       if (nrow(initial_bubbles) == 0) {
@@ -271,9 +287,20 @@ mod_seabass_telemetry_data_server <- function(
           stroke = TRUE,
           color = "#003f5c",
           weight = 1,
-          fillOpacity = 0.65,
-          fillColor = "#2c7fb8",
+          fillOpacity = 0.85,
+          fillColor = ~detection_pal(n_station),
           group = "Detection proportion",
+          label = ~marker_label,
+          labelOptions = labelOptions(
+            noHide = TRUE,
+            direction = "center",
+            textOnly = TRUE,
+            style = list(
+              "font-weight" = "700",
+              "font-size" = "11px",
+              "color" = "#111827"
+            )
+          ),
           popup = ~popup
         )
     })
@@ -297,9 +324,20 @@ mod_seabass_telemetry_data_server <- function(
           stroke = TRUE,
           color = "#003f5c",
           weight = 1,
-          fillOpacity = 0.65,
-          fillColor = "#2c7fb8",
+          fillOpacity = 0.85,
+          fillColor = ~detection_pal(n_station),
           group = "Detection proportion",
+          label = ~marker_label,
+          labelOptions = labelOptions(
+            noHide = TRUE,
+            direction = "center",
+            textOnly = TRUE,
+            style = list(
+              "font-weight" = "700",
+              "font-size" = "11px",
+              "color" = "#111827"
+            )
+          ),
           popup = ~popup
         )
     }, ignoreInit = TRUE)

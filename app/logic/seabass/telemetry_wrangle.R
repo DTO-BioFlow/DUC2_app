@@ -18,6 +18,7 @@ box::use(
     all_of
   ],
   lubridate[floor_date],
+  sf[st_drop_geometry],
   tidyr[pivot_wider, expand_grid, replace_na]
 )
 
@@ -93,6 +94,10 @@ build_monthyear_rds <- function(
 # prepare minicharts leaflet inputs
 
 prep_minicharts_inputs <- function(deployments, etn_monthyear_individual_sum) {
+  if (inherits(deployments, "sf")) {
+    deployments <- st_drop_geometry(deployments)
+  }
+
   # stations: ensure exactly 1 row per station_name
   stations <- deployments |>
     group_by(station_name) |>
