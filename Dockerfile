@@ -1,5 +1,5 @@
 # Base: R in a Debian Linux environment
-FROM rocker/geospatial:4.5.1
+FROM rocker/geospatial:4.6.0
 
 # Install system dependencies for R packages
 RUN apt-get update && apt-get install -y \
@@ -42,13 +42,12 @@ COPY .Rprofile .Rprofile
 RUN R -e "renv::restore(lockfile='renv.lock', prompt=FALSE, clean=TRUE)"
 
 # Copy all R files
-COPY www/ ./www/
+COPY app/ ./app/
 COPY data/ ./data/
-COPY R/ ./R/
-COPY *.R .
+COPY app.R dependencies.R rhino.yml config.yml ./
 # Expose Shiny port
 EXPOSE 3838
 
 # Default command: run the Shiny app
 
-CMD ["R", "-e", "shiny::runApp('/usr/src/app', host='0.0.0.0', port=3838)"]
+CMD ["R", "-e", "options(shiny.host='0.0.0.0', shiny.port=3838); shiny::runApp('/usr/src/app')"]

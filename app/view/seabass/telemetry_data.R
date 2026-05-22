@@ -106,7 +106,15 @@ mod_seabass_telemetry_data_server <- function(
       if (is.na(selected_month)) {
         i <- 1L
       } else {
-        i <- which.min(abs(as.numeric(months - selected_month)))
+        month_index <- match(
+          format(selected_month, "%Y-%m"),
+          format(months, "%Y-%m")
+        )
+        i <- if (is.na(month_index)) {
+          which.min(abs(as.numeric(months - selected_month)))
+        } else {
+          month_index
+        }
       }
       i
     })

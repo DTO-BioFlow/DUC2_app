@@ -1,21 +1,15 @@
 box::use(
   shiny[
     NS,
-    actionButton,
-    sliderInput,
-    uiOutput,
     moduleServer,
-    observeEvent,
     reactive,
-    renderUI,
-    textOutput,
-    renderText,
-    updateSliderInput,
+    uiOutput,
     tags,
     tagList,
+    renderUI,
     req
   ],
-  bslib[layout_sidebar, sidebar, layout_columns],
+  bslib[layout_sidebar, sidebar],
   leaflet[
     leafletOutput,
     renderLeaflet,
@@ -28,6 +22,11 @@ box::use(
   leaflet.minicharts[addFlows, popupArgs],
   htmltools[HTML],
   app / logic / maps[make_base_map],
+  app / view / acoustic_telemetry_sidebar[
+    mod_acoustic_telemetry_sidebar_ui,
+    mod_acoustic_telemetry_sidebar_server,
+    format_month_range
+  ],
   dplyr[
     arrange,
     count,
@@ -57,16 +56,8 @@ mod_seabass_network_analysis_ui <- function(id) {
     sidebar = sidebar(
       width = 320,
       open = "open",
-      layout_columns(
-        actionButton(ns("prev_month"), "Previous month", width = "100%"),
-        actionButton(ns("next_month"), "Next month", width = "100%"),
-        col_widths = c(6, 6)
-      ),
-      uiOutput(ns("month_slider")),
-      tags$div(
-        style = "text-align:center; font-weight:bold;",
-        textOutput(ns("month_label"))
-      ),
+      title = "Network analysis",
+      mod_acoustic_telemetry_sidebar_ui(ns("controls"), show_toggle = FALSE),
       uiOutput(ns("month_summary"))
     ),
     leafletOutput(ns("network_map"), height = 1000)
@@ -84,79 +75,61 @@ mod_seabass_network_analysis_server <- function(
     months <- network_data$months
     pal <- colorNumeric(
       palette = c("#ffffcc", "#a1dab4", "#41b6c4", "#2c7fb8", "#253494"),
-      domain = detection_domain(network_data$stations_month),
+      domain = detection_domain(network_data$detections_monthly),
       na.color = "#d9d9d9"
     )
-    max_flow <- max(network_data$flows$n_transitions, 1, na.rm = TRUE)
+    max_flow <- flow_domain(network_data$flows)
 
-    output$month_slider <- renderUI({
-      if (length(months) == 0) {
-        return(tags$div("No acoustic telemetry detections available."))
-      }
+    range_selection <- mod_acoustic_telemetry_sidebar_server(
+      "controls",
+      months = months,
+      show_toggle = FALSE
+    )
 
-      sliderInput(
-        session$ns("month"),
-        "Year-month",
-        min = months[1],
-        max = months[length(months)],
-        value = months[1],
-        timeFormat = "%Y-%m",
-        step = 30,
-        ticks = FALSE
+    current_month_range <- reactive({
+      req(range_selection()$month_range)
+      range_selection()$month_range
+    })
+
+    current_detections <- reactive({
+      detections_for_month_range(
+        network_data$detections_monthly,
+        current_month_range()
       )
     })
 
-    current_month_index <- reactive({
-      req(input$month)
-
-      selected_month <- as.Date(input$month)
-      if (is.na(selected_month)) {
-        1L
-      } else {
-        which.min(abs(as.numeric(months - selected_month)))
-      }
-    })
-
-    current_month <- reactive({
-      req(length(months) > 0)
-      months[current_month_index()]
-    })
-
     current_station_points <- reactive({
-      station_points_for_month(
-        network_data$stations_month,
-        current_month()
+      station_points_for_range(
+        network_data$detections_monthly,
+        network_data$stations,
+        current_month_range()
       )
     })
 
     current_flows <- reactive({
-      flow_lines_for_month(network_data$flows, current_month())
-    })
-
-    output$month_label <- renderText({
-      format(current_month(), "%Y-%m")
+      flow_lines_for_range(network_data$flows, current_month_range())
     })
 
     output$month_summary <- renderUI({
-      m <- current_month()
-      stations_m <- current_station_points()
-      flows_m <- current_flows()
-      summary_m <- network_data$month_summary |>
-        filter(month == m)
+      month_range <- current_month_range()
+      range_label <- format_month_range(month_range)
+      detections_range <- current_detections()
+      stations_range <- current_station_points()
+      flows_range <- current_flows()
 
-      if (nrow(summary_m) == 0) {
+      if (nrow(detections_range) == 0) {
         return(tagList(
           tags$hr(),
-          tags$b(format(m, "%Y-%m")),
-          tags$div("No detections for this month.")
+          tags$b(range_label),
+          tags$div("No detections for this range.")
         ))
       }
 
-      top_station <- stations_m |>
+      top_station <- stations_range |>
         arrange(desc(n_detections)) |>
         slice_head(n = 1)
 
-      top_flow <- flows_m |>
+      top_flow <- flows_range |>
         arrange(desc(n_transitions)) |>
         slice_head(n = 1)
 
@@ -186,23 +159,23 @@ mod_seabass_network_analysis_server <- function(
 
       tagList(
         tags$hr(),
-        tags$b(format(m, "%Y-%m")),
+        tags$b(range_label),
         tags$ul(
           tags$li(tagList(
             "Total detections: ",
-            tags$strong(summary_m$total_detections[1])
+            tags$strong(nrow(detections_range))
           )),
           tags$li(tagList(
             "Individuals detected: ",
-            tags$strong(summary_m$n_individuals[1])
+            tags$strong(n_distinct(detections_range$animal_id))
           )),
           tags$li(tagList(
             "Active stations: ",
-            tags$strong(summary_m$active_stations[1])
+            tags$strong(n_distinct(detections_range$station_name))
           )),
           tags$li(tagList(
             "Movements between stations: ",
-            tags$strong(sum(flows_m$n_transitions, na.rm = TRUE))
+            tags$strong(sum(flows_range$n_transitions, na.rm = TRUE))
           )),
           tags$li(tagList(
             "Station with most detections: ",
@@ -277,7 +250,7 @@ mod_seabass_network_analysis_server <- function(
           addLegend(
             position = "bottomleft",
             pal = pal,
-            values = detection_domain(network_data$stations_month),
+            values = detection_domain(network_data$detections_monthly),
             title = "Detections",
             opacity = 1
           )
@@ -290,29 +263,11 @@ mod_seabass_network_analysis_server <- function(
             "box-shadow:0 1px 4px rgba(0,0,0,0.25);'>",
             "<b>Network analysis</b><br>",
             "Point colour and label show detections per station.<br>",
-            "Flow width shows transitions between stations.",
+            "Flow width shows transitions between stations in the selected range.",
             "</div>"
           )),
           position = "bottomright"
         )
-    })
-
-    observeEvent(input$prev_month, {
-      i <- max(1, current_month_index() - 1)
-      updateSliderInput(
-        session,
-        "month",
-        value = months[i]
-      )
-    })
-
-    observeEvent(input$next_month, {
-      i <- min(length(months), current_month_index() + 1)
-      updateSliderInput(
-        session,
-        "month",
-        value = months[i]
-      )
     })
   })
 }
@@ -339,16 +294,6 @@ prep_network_analysis_data <- function(detections) {
     distinct(station_name, lon, lat) |>
     arrange(station_name)
 
-  stations_month <- detections_monthly |>
-    group_by(month, station_name) |>
-    summarise(
-      n_detections = n(),
-      n_individuals = n_distinct(animal_id),
-      .groups = "drop"
-    ) |>
-    left_join(stations, by = "station_name") |>
-    arrange(month, station_name)
-
   movement_events <- detections_monthly |>
     arrange(animal_id, date_time) |>
     group_by(animal_id) |>
@@ -358,16 +303,15 @@ prep_network_analysis_data <- function(detections) {
     ) |>
     ungroup() |>
     filter(
-      month == to_month,
       !is.na(to),
       station_name != to
     ) |>
     transmute(
-      month,
+      from_month = month,
+      to_month,
       from = station_name,
       to
-    ) |>
-    count(month, from, to, name = "n_transitions")
+    )
 
   from_coords <- stations |>
     rename(
@@ -391,55 +335,49 @@ prep_network_analysis_data <- function(detections) {
       !is.na(from_lon),
       !is.na(to_lat),
       !is.na(to_lon)
-    ) |>
-    arrange(month, desc(n_transitions)) |>
-    mutate(
-      popup = paste0(
-        "<b>From:</b> ",
-        from,
-        "<br><b>To:</b> ",
-        to,
-        "<br><b>Transitions:</b> ",
-        n_transitions,
-        "<br><b>Month:</b> ",
-        format(month, "%Y-%m")
-      )
-    )
-
-  month_summary <- detections_monthly |>
-    group_by(month) |>
-    summarise(
-      total_detections = n(),
-      n_individuals = n_distinct(animal_id),
-      active_stations = n_distinct(station_name),
-      .groups = "drop"
     )
 
   list(
+    detections_monthly = detections_monthly,
     stations = stations,
-    stations_month = stations_month,
     flows = flows,
-    month_summary = month_summary,
     months = sort(unique(detections_monthly$month))
   )
 }
 
-station_points_for_month <- function(stations_month, month_value) {
-  stations_m <- stations_month |>
-    filter(month == month_value)
+detections_for_month_range <- function(detections_monthly, month_range) {
+  detections_monthly |>
+    filter(
+      month >= month_range[1],
+      month <= month_range[2]
+    )
+}
 
-  if (nrow(stations_m) == 0) {
-    return(stations_m)
+station_points_for_range <- function(detections_monthly, stations, month_range) {
+  stations_range <- detections_for_month_range(detections_monthly, month_range) |>
+    group_by(station_name) |>
+    summarise(
+      n_detections = n(),
+      n_individuals = n_distinct(animal_id),
+      .groups = "drop"
+    ) |>
+    left_join(stations, by = "station_name") |>
+    arrange(station_name)
+
+  if (nrow(stations_range) == 0) {
+    return(stations_range)
   }
 
-  stations_m |>
+  range_label <- format_month_range(month_range)
+
+  stations_range |>
     mutate(
       radius = scale_between(sqrt(n_detections), 7, 24),
       popup = paste0(
         "<b>",
         station_name,
-        "</b><br><b>Month:</b> ",
-        format(month, "%Y-%m"),
+        "</b><br><b>Range:</b> ",
+        range_label,
         "<br><b>Detections:</b> ",
         n_detections,
         "<br><b>Individuals:</b> ",
@@ -448,17 +386,60 @@ station_points_for_month <- function(stations_month, month_value) {
     )
 }
 
-flow_lines_for_month <- function(flows, month_value) {
-  flows |>
-    filter(month == month_value)
+flow_lines_for_range <- function(flows, month_range) {
+  flows_range <- flows |>
+    filter(
+      from_month >= month_range[1],
+      from_month <= month_range[2],
+      to_month >= month_range[1],
+      to_month <= month_range[2]
+    ) |>
+    group_by(from, to, from_lat, from_lon, to_lat, to_lon) |>
+    summarise(n_transitions = n(), .groups = "drop") |>
+    arrange(desc(n_transitions))
+
+  if (nrow(flows_range) == 0) {
+    return(flows_range)
+  }
+
+  range_label <- format_month_range(month_range)
+
+  flows_range |>
+    mutate(
+      popup = paste0(
+        "<b>From:</b> ",
+        from,
+        "<br><b>To:</b> ",
+        to,
+        "<br><b>Transitions:</b> ",
+        n_transitions,
+        "<br><b>Range:</b> ",
+        range_label
+      )
+    )
 }
 
-detection_domain <- function(stations_month) {
-  if (nrow(stations_month) == 0) {
+detection_domain <- function(detections_monthly) {
+  if (nrow(detections_monthly) == 0) {
     return(c(0, 1))
   }
 
-  stations_month$n_detections
+  station_totals <- detections_monthly |>
+    group_by(station_name) |>
+    summarise(n_detections = n(), .groups = "drop")
+
+  station_totals$n_detections
+}
+
+flow_domain <- function(flows) {
+  if (nrow(flows) == 0) {
+    return(1)
+  }
+
+  flow_totals <- flows |>
+    count(from, to, name = "n_transitions")
+
+  max(flow_totals$n_transitions, 1, na.rm = TRUE)
 }
 
 scale_between <- function(x, min_value, max_value) {

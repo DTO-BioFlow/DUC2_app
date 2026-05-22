@@ -159,6 +159,8 @@ monthly_receivers <-
     .groups = "drop"
   )
 
+
+
 # Build leaflet map -------------------------------------------------------
 months_available <- sort(unique(monthly_network$year_month))
 
@@ -375,7 +377,7 @@ stations_PAM <-
             end = max(datetime),
             active_hours = length(unique(datetime))) %>% 
   as.data.frame()
-stationsum
+stations_PAM
 monthly_PAM <-
   PAM_data %>%
   arrange(datetime) %>%
@@ -395,3 +397,25 @@ basemap_PAM <-
           homebutton = F,
           legend = F)
 basemap_PAM
+
+
+# AT summary map ----------------------------------------------------------
+at_summary <- 
+  detections %>% 
+  dplyr::select(animal_id, date_time, station_name, deploy_longitude, deploy_latitude)%>%
+  dplyr::mutate(month = lubridate::month(date_time))%>%
+  group_by(station_name,month) %>%
+  summarise(dets = n(),
+            longitude = mean(deploy_longitude),
+            latitude = mean(deploy_latitude))%>%
+  st_as_sf(coords = c("longitude", "latitude"), crs= "epsg:4326")
+mapview(at_summary)
+dets = length(animal_id),
+            stations = length(unique(station_name)))
+            ,
+            min = min(date_time), 
+            max = max(date_time), 
+            tracklength = max(date_time)-min(date_time)) %>% 
+  as.data.frame()
+animal_id_summary
+

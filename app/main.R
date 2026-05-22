@@ -8,6 +8,7 @@ box::use(
     a,
     actionLink,
     checkboxGroupInput,
+    
     addResourcePath,
     reactive
   ],
@@ -39,8 +40,7 @@ box::use(
   app / view / seabass / main[mod_seabass_ui, mod_seabass_server],
   app / view / porpoise[mod_porpoise_ui, mod_porpoise_server],
   app / view / environmental_data[mod_env_ui, mod_env_server],
-  app / view / habitat_suitability[mod_habitat_suitability_ui, mod_habitat_suitability_server],
-  app / view / lagrangian_connectivity[mod_lagrangian_connectivity_ui, mod_lagrangian_connectivity_server]
+  app / view / habitat_suitability[mod_habitat_suitability_ui, mod_habitat_suitability_server]
 )
 
 addResourcePath(
@@ -148,13 +148,6 @@ ui <- function(id) {
             style = "font-size: 16px; vertical-align:middle;"
           ),
           mod_habitat_suitability_ui(ns("habitat_suitability"))
-        ),
-        nav_panel(
-          title = tags$span(
-            "Lagrangian connectivity",
-            style = "font-size: 16px; vertical-align:middle;"
-          ),
-          mod_lagrangian_connectivity_ui(ns("lagrangian_connectivity"))
         )
       )
     )
@@ -182,15 +175,15 @@ server <- function(id) {
     )
     env_layers <- mod_env_server(
       id = "env",
-      wms_layers = wms_layers
+      wms_layers = wms_layers,
+      habitat_data = habitat_suitability_s3,
+      acoustic_detections = TEL_detections,
+      pam_data = PAM_data
     )
     mod_habitat_suitability_server(
       id = "habitat_suitability",
       sidebar_layers = reactive(env_layers()$habitat_all),
       habitat_data = habitat_suitability_s3
-    )
-    mod_lagrangian_connectivity_server(
-      id = "lagrangian_connectivity"
     )
   })
 }
