@@ -15,7 +15,6 @@ box::use(
     removeControl
   ],
   leaflet.minicharts[addFlows, clearFlows, popupArgs],
-  terra[values],
   bslib[layout_sidebar, sidebar],
   dplyr[
     arrange,
@@ -185,7 +184,7 @@ mod_env_server <- function(
           ) |>
           addLegend(
             pal = layer$palette,
-            values = values(layer$raster),
+            values = layer$domain,
             title = layer$title,
             layerId = "legend-habitat-suitability"
           )
@@ -502,7 +501,15 @@ clear_pam_summary_overlay <- function(map) {
   map
 }
 
+acoustic_raw_data_cache <- new.env(parent = emptyenv())
+pam_summary_data_cache <- new.env(parent = emptyenv())
+
 prep_acoustic_raw_month_data <- function(detections_monthly, stations) {
+  cache_key <- paste(nrow(detections_monthly), nrow(stations), sep = ":")
+  if (exists(cache_key, envir = acoustic_raw_data_cache, inherits = FALSE)) {
+    return(get(cache_key, envir = acoustic_raw_data_cache))
+  }
+
   detections_by_month <- detections_monthly |>
     mutate(month_of_year = as.integer(format(month, "%m")))
 
@@ -531,11 +538,14 @@ prep_acoustic_raw_month_data <- function(detections_monthly, stations) {
       rel = n_detections / n_month
     )
 
-  list(
+  result <- list(
     stations = stations,
     station_months = station_months,
     months = sort(unique(station_months$month_of_year))
   )
+
+  assign(cache_key, result, envir = acoustic_raw_data_cache)
+  result
 }
 
 raw_station_points_for_month <- function(raw_data, month_value) {
@@ -577,6 +587,11 @@ raw_detection_domain <- function(raw_data) {
 }
 
 prep_pam_summary_data <- function(pam_data) {
+  cache_key <- paste(nrow(pam_data), ncol(pam_data), sep = ":")
+  if (exists(cache_key, envir = pam_summary_data_cache, inherits = FALSE)) {
+    return(get(cache_key, envir = pam_summary_data_cache))
+  }
+
   pam_hourly <- pam_data |>
     filter(
       !is.na(datetime),
@@ -623,11 +638,14 @@ prep_pam_summary_data <- function(pam_data) {
     ) |>
     arrange(month_of_year, Station)
 
-  list(
+  result <- list(
     stations = stations,
     station_months = station_months,
     months = sort(unique(station_months$month_of_year))
   )
+
+  assign(cache_key, result, envir = pam_summary_data_cache)
+  result
 }
 
 pam_points_for_month <- function(pam_summary_data, month_value) {

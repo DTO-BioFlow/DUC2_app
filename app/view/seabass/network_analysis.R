@@ -272,7 +272,22 @@ mod_seabass_network_analysis_server <- function(
   })
 }
 
+network_analysis_data_cache <- new.env(parent = emptyenv())
+
 prep_network_analysis_data <- function(detections) {
+  latest_detection <- suppressWarnings(
+    max(as.numeric(detections$date_time), na.rm = TRUE)
+  )
+  cache_key <- paste(
+    nrow(detections),
+    ncol(detections),
+    latest_detection,
+    sep = ":"
+  )
+  if (exists(cache_key, envir = network_analysis_data_cache, inherits = FALSE)) {
+    return(get(cache_key, envir = network_analysis_data_cache))
+  }
+
   detections_monthly <- detections |>
     filter(
       !is.na(date_time),
@@ -337,12 +352,15 @@ prep_network_analysis_data <- function(detections) {
       !is.na(to_lon)
     )
 
-  list(
+  result <- list(
     detections_monthly = detections_monthly,
     stations = stations,
     flows = flows,
     months = sort(unique(detections_monthly$month))
   )
+
+  assign(cache_key, result, envir = network_analysis_data_cache)
+  result
 }
 
 detections_for_month_range <- function(detections_monthly, month_range) {

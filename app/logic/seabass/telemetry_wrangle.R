@@ -69,7 +69,7 @@ build_monthyear_rds <- function(
 
     # if STAC etn data are unavailable - to remove later
     etn_dataset <-
-      readRDS("./data/TEL_detections.rds") |>
+      readRDS(file.path(dirname(output_path), "TEL_detections.rds")) |>
       rename(
         latitude = deploy_latitude,
         longitude = deploy_longitude,
@@ -93,7 +93,18 @@ build_monthyear_rds <- function(
 
 # prepare minicharts leaflet inputs
 
+minicharts_inputs_cache <- new.env(parent = emptyenv())
+
 prep_minicharts_inputs <- function(deployments, etn_monthyear_individual_sum) {
+  cache_key <- paste(
+    nrow(deployments),
+    nrow(etn_monthyear_individual_sum),
+    sep = ":"
+  )
+  if (exists(cache_key, envir = minicharts_inputs_cache, inherits = FALSE)) {
+    return(get(cache_key, envir = minicharts_inputs_cache))
+  }
+
   if (inherits(deployments, "sf")) {
     deployments <- st_drop_geometry(deployments)
   }
@@ -177,7 +188,7 @@ prep_minicharts_inputs <- function(deployments, etn_monthyear_individual_sum) {
     all(stations$station_name %in% anim_df$station_name)
   )
 
-  list(
+  result <- list(
     stations = stations,
     anim_df = anim_df,
     ids = ids,
@@ -185,4 +196,7 @@ prep_minicharts_inputs <- function(deployments, etn_monthyear_individual_sum) {
     width_all = width_all,
     height_all = height_all
   )
+
+  assign(cache_key, result, envir = minicharts_inputs_cache)
+  result
 }

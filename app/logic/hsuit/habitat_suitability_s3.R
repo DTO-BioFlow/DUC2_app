@@ -10,9 +10,9 @@
 ##################################################################################
 
 box::use(
-  terra[rast, values],
+  terra[rast, minmax],
   leaflet[colorNumeric],
-  httr[GET, write_disk, stop_for_status]
+  httr[GET, write_disk, stop_for_status, timeout]
 )
 
 load_habitat_suitability_s3 <- function(s3_bucket_url) {
@@ -49,6 +49,7 @@ load_habitat_suitability_s3 <- function(s3_bucket_url) {
       file_name = monthly_file,
       url = layer_url(monthly_file),
       monthly = TRUE,
+      layer_count = 12,
       scenario = "present",
       scenario_label = "Present",
       available = TRUE
@@ -63,6 +64,7 @@ load_habitat_suitability_s3 <- function(s3_bucket_url) {
       file_name = present_file,
       url = layer_url(present_file),
       monthly = FALSE,
+      layer_count = 2,
       scenario = "present",
       scenario_label = "Present",
       available = TRUE
@@ -91,6 +93,7 @@ load_habitat_suitability_s3 <- function(s3_bucket_url) {
         file_name = future_file,
         url = layer_url(future_file),
         monthly = FALSE,
+        layer_count = 9,
         scenario = scenario_id,
         scenario_label = scenario_specs[[scenario_id]],
         available = TRUE
@@ -98,21 +101,36 @@ load_habitat_suitability_s3 <- function(s3_bucket_url) {
     }
   }
 
-  load_layer <- function(url, label) {
-    tf <- tempfile(fileext = ".nc")
+  cache_dir <- file.path(tempdir(), "duc2_habitat_suitability")
+  dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+
+  layer_cache <- new.env(parent = emptyenv())
+  palette_cache <- new.env(parent = emptyenv())
+  domain_cache <- new.env(parent = emptyenv())
+
+  load_layer <- function(info) {
+    layer_file <- file.path(cache_dir, basename(info$file_name))
+
     tryCatch(
       {
-        response <- GET(url, write_disk(tf, overwrite = TRUE))
-        stop_for_status(response)
-        rast(tf)
+        if (!file.exists(layer_file)) {
+          response <- GET(
+            info$url,
+            write_disk(layer_file, overwrite = TRUE),
+            timeout(120)
+          )
+          stop_for_status(response)
+        }
+
+        rast(layer_file)
       },
       error = function(error) {
         warning(
           paste0(
             "Could not load habitat suitability layer '",
-            label,
+            info$label,
             "' from ",
-            url,
+            info$url,
             ": ",
             conditionMessage(error)
           ),
@@ -123,30 +141,75 @@ load_habitat_suitability_s3 <- function(s3_bucket_url) {
     )
   }
 
-  available_layers_info <- Filter(function(x) {
-    isTRUE(x$available)
-  }, habitat_layers_info)
-
-  habitat_layers <- lapply(available_layers_info, function(x) {
-    load_layer(x$url, x$label)
-  })
-  habitat_layers <- Filter(Negate(is.null), habitat_layers)
-
-  loaded_layer_ids <- names(habitat_layers)
   habitat_layers_info <- lapply(names(habitat_layers_info), function(id) {
     x <- habitat_layers_info[[id]]
-    x$loaded <- id %in% loaded_layer_ids
+    x$loaded <- FALSE
     x
   }) |>
     stats::setNames(names(habitat_layers_info))
 
-  habitat_palettes <- lapply(habitat_layers, function(r) {
-    colorNumeric("viridis", values(r), na.color = "transparent")
-  })
+  layer_domain <- function(r) {
+    domain <- tryCatch(
+      as.numeric(range(minmax(r), na.rm = TRUE)),
+      error = function(error) c(0, 1)
+    )
+
+    if (
+      length(domain) != 2 ||
+        any(!is.finite(domain)) ||
+        domain[1] == domain[2]
+    ) {
+      return(c(0, 1))
+    }
+
+    domain
+  }
+
+  get_layer <- function(layer_id) {
+    info <- habitat_layers_info[[layer_id]]
+    if (is.null(info) || !isTRUE(info$available)) {
+      return(NULL)
+    }
+
+    if (exists(layer_id, envir = layer_cache, inherits = FALSE)) {
+      r <- get(layer_id, envir = layer_cache)
+    } else {
+      r <- load_layer(info)
+      if (is.null(r)) {
+        return(NULL)
+      }
+
+      assign(layer_id, r, envir = layer_cache)
+      info$loaded <- TRUE
+      habitat_layers_info[[layer_id]] <<- info
+    }
+
+    if (exists(layer_id, envir = domain_cache, inherits = FALSE)) {
+      domain <- get(layer_id, envir = domain_cache)
+    } else {
+      domain <- layer_domain(r)
+      assign(layer_id, domain, envir = domain_cache)
+    }
+
+    if (exists(layer_id, envir = palette_cache, inherits = FALSE)) {
+      palette <- get(layer_id, envir = palette_cache)
+    } else {
+      palette <- colorNumeric("viridis", domain, na.color = "transparent")
+      assign(layer_id, palette, envir = palette_cache)
+    }
+
+    list(
+      raster = r,
+      palette = palette,
+      domain = domain
+    )
+  }
 
   list(
     habitat_layers_info = habitat_layers_info,
-    habitat_layers = habitat_layers,
-    habitat_palettes = habitat_palettes
+    habitat_layers = layer_cache,
+    habitat_palettes = palette_cache,
+    habitat_domains = domain_cache,
+    get_layer = get_layer
   )
 }

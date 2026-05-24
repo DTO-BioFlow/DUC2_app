@@ -45,18 +45,22 @@ box::use(
 
 addResourcePath(
   "assets",
-  normalizePath(file.path("app", "static"), mustWork = TRUE)
+  normalizePath(box::file("static"), mustWork = TRUE)
 )
 
-load(file.path("data", "DTO_DUC2_PpData.Rdata"))
-TEL_deployments <- readRDS(file.path("data", "TEL_deployments.rds"))
-TEL_detections <- readRDS(file.path("data", "TEL_detections.rds"))
+load(box::file("..", "data", "DTO_DUC2_PpData.Rdata"))
+TEL_deployments <- readRDS(box::file("..", "data", "TEL_deployments.rds"))
+TEL_detections <- readRDS(box::file("..", "data", "TEL_detections.rds"))
 
 wms_layers <- load_STAC_metadata(
-  metadata_csv = file.path("data", "EDITO_STAC_layers_metadata.csv")
+  metadata_csv = box::file("..", "data", "EDITO_STAC_layers_metadata.csv")
 )
 etn_monthyear_individual_sum <- build_monthyear_rds(
-  output_path = "etn_sum_seabass_monthyear_individual.rds",
+  output_path = box::file(
+    "..",
+    "data",
+    "etn_sum_seabass_monthyear_individual.rds"
+  ),
   wms_layer_metadata = wms_layers,
   dataset_key = "seabass acoustic detections"
 )

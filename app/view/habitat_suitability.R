@@ -25,8 +25,7 @@ box::use(
     leafletProxy,
     clearImages,
     clearControls
-  ],
-  terra[values]
+  ]
 )
 
 # ui ----------------------------------------------------------------------
@@ -39,7 +38,7 @@ mod_habitat_suitability_ui <- function(id) {
       width = 320,
       open = "open",
       title = "Habitat suitability",
-      mod_habitat_suitability_sidebar_ui(ns("controls"), show_toggle = FALSE)
+      mod_habitat_suitability_sidebar_ui(ns("controls"))
     ),
     leafletOutput(ns("habitat_map"), height = 700)
   )
@@ -63,8 +62,7 @@ mod_habitat_suitability_server <- function(
   moduleServer(id, function(input, output, session) {
     habitat_selection <- mod_habitat_suitability_sidebar_server(
       "controls",
-      habitat_data = habitat_data,
-      show_toggle = FALSE
+      habitat_data = habitat_data
     )
 
     # Initialize base map
@@ -74,6 +72,13 @@ mod_habitat_suitability_server <- function(
     })
 
     observe({
+      map_hidden <- session$clientData[[
+        paste0("output_", session$ns("habitat_map"), "_hidden")
+      ]]
+      if (!isFALSE(map_hidden)) {
+        return(invisible(NULL))
+      }
+
       proxy <- leafletProxy("habitat_map", session = session) |>
         clearImages() |>
         clearControls()
@@ -96,7 +101,7 @@ mod_habitat_suitability_server <- function(
         ) |>
         addLegend(
           pal = layer$palette,
-          values = values(layer$raster),
+          values = layer$domain,
           title = layer$title
         )
     })

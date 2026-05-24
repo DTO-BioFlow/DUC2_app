@@ -216,8 +216,17 @@ mod_habitat_suitability_sidebar_server <- function(
 
     current_layer_count <- reactive({
       req(input$period)
-      r_stack <- current_raster_stack()
+      layer_info <- if (is.null(habitat_data)) {
+        NULL
+      } else {
+        habitat_data$habitat_layers_info[[selected_layer_id()]]
+      }
 
+      if (!is.null(layer_info$layer_count)) {
+        return(layer_info$layer_count)
+      }
+
+      r_stack <- current_raster_stack()
       if (is.null(r_stack)) {
         return(habitat_fallback_layer_count(input$period))
       }
@@ -297,13 +306,22 @@ habitat_suitability_selected_layer <- function(habitat_data, selection) {
     return(NULL)
   }
 
-  r_stack <- habitat_data$habitat_layers[[layer_id]]
-  pal <- habitat_data$habitat_palettes[[layer_id]]
+  layer <- if (!is.null(habitat_data$get_layer)) {
+    habitat_data$get_layer(layer_id)
+  } else {
+    list(
+      raster = habitat_data$habitat_layers[[layer_id]],
+      palette = habitat_data$habitat_palettes[[layer_id]],
+      domain = c(0, 1)
+    )
+  }
 
-  if (is.null(r_stack) || is.null(pal)) {
+  if (is.null(layer) || is.null(layer$raster) || is.null(layer$palette)) {
     return(NULL)
   }
 
+  r_stack <- layer$raster
+  pal <- layer$palette
   layer_index <- min(max(1, time_index), nlyr(r_stack))
   info <- habitat_data$habitat_layers_info[[layer_id]]
   layer_label <- if (!is.null(info$label)) info$label else layer_id
@@ -320,6 +338,7 @@ habitat_suitability_selected_layer <- function(habitat_data, selection) {
   list(
     raster = r_stack[[layer_index]],
     palette = pal,
+    domain = layer$domain,
     title = paste(layer_label, time_label, sep = " - ")
   )
 }
