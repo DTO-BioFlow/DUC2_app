@@ -1,15 +1,3 @@
-##################################################################################
-##################################################################################
-
-# Author: Lotte Pohl
-# Email: lotte.pohl@vliz.be
-# Date: 2026-02-03
-# Script Name: ~/DUC2_viewer_acoustic_telemetry/R/map_environmental.R
-# Script Description: make a base leaflet map, and a map with several environmental layers as overlaygroups
-
-##################################################################################
-##################################################################################
-
 box::use(
   leaflet[
     leaflet,

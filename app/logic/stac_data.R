@@ -1,16 +1,3 @@
-##################################################################################
-##################################################################################
-
-# Author: Lotte Pohl
-# Email: lotte.pohl@vliz.be
-# Date: 2026-01-26
-# Script Name: ~/DUC2_viewer_acoustic_telemetry/leaflet_env_data.R
-# Script Description: load (meta)data from the EDITO STAC catalogue to be displayed on leaflet maps.
-#                     Metada for all environmental data layers, data for acoustic telemetry data from the European Tracking Network (ETN)
-
-##################################################################################
-##################################################################################
-
 box::use(
   tibble[tibble, as_tibble, add_row],
   dplyr[arrange, distinct, filter],

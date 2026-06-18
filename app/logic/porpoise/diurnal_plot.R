@@ -1,15 +1,3 @@
-##################################################################################
-##################################################################################
-
-# Author: Emily T. Griffiths, Aarhus University
-# Email: emilytgriffiths@ecos.au.dk
-# Date: 2026-02-19
-# Script Description: Creates the dial plot of PPM, and normalizes the data based
-# on the local sunrise/sunset of where the data was collected.
-
-##################################################################################
-##################################################################################
-
 box::use(
   grDevices[colorRampPalette],
   suntools[sunriset],

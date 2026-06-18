@@ -1,4 +1,3 @@
-# TODO: change leaflet map to be updated without everything being cleared, to avoid flickering
 
 box::use(
   shiny[

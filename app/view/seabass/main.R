@@ -1,15 +1,3 @@
-##################################################################################
-##################################################################################
-
-# Author: Lotte Pohl
-# Email: lotte.pohl@vliz.be
-# Date: 2026-02-03
-# Script Name: ~/DUC2_viewer_acoustic_telemetry/R/module_seabass_telemetry.R
-# Script Description: make the seabass tab, containing acoustic telemetry data
-
-##################################################################################
-##################################################################################
-
 box::use(
   shiny[NS, moduleServer],
   bslib[navset_card_tab, nav_panel, page_fluid],

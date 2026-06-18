@@ -1,14 +1,3 @@
-##################################################################################
-##################################################################################
-
-# Author: Johannes Nowe
-# Date: 2026-05-19
-# Script Name: ~/DUC2_app/app/logic/hsuit/habitat_suitability_s3.R
-# Script Description: load habitat suitability data layers from s3 bucket
-
-##################################################################################
-##################################################################################
-
 box::use(
   terra[rast, minmax],
   leaflet[colorNumeric],
