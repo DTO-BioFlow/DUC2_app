@@ -27,6 +27,7 @@ box::use(
     config[dto_colors, bioflow_url, bioflow_duc2_url, s3_bucket_habitatsuit_url],
   app / logic / maps[make_base_map, make_env_wms_map],
   app / logic / stac_data[load_STAC_metadata],
+  app / logic / SB4S / SB4S_api[load_SB4S_simout],
   app /
     logic /
     hsuit /
@@ -39,7 +40,8 @@ box::use(
   app / view / seabass / main[mod_seabass_ui, mod_seabass_server],
   app / view / porpoise[mod_porpoise_ui, mod_porpoise_server],
   app / view / environmental_data[mod_env_ui, mod_env_server],
-  app / view / habitat_suitability[mod_habitat_suitability_ui, mod_habitat_suitability_server]
+  app / view / habitat_suitability[mod_habitat_suitability_ui, mod_habitat_suitability_server],
+  app / view / SB4S[mod_SB4S_ui, mod_SB4S_server]
 )
 
 addResourcePath(
@@ -66,6 +68,8 @@ etn_monthyear_individual_sum <- build_monthyear_rds(
 habitat_suitability_s3 <- load_habitat_suitability_s3(
   s3_bucket_url = s3_bucket_habitatsuit_url
 )
+
+SB4S_frozensim <- load_SB4S_simout(box::file("..", "data", "sb4s_simout_52w.nc"))
 
 #' @export
 ui <- function(id) {
@@ -151,6 +155,13 @@ ui <- function(id) {
             style = "font-size: 16px; vertical-align:middle;"
           ),
           mod_habitat_suitability_ui(ns("habitat_suitability"))
+        ),
+	nav_panel(
+          title = tags$span(
+            "SB4S seabass simulation",
+            style = "font-size: 16px; vertical-align:middle;"
+          ),
+          mod_SB4S_ui(ns("SB4S"))
         )
       )
     )
@@ -187,6 +198,10 @@ server <- function(id) {
       id = "habitat_suitability",
       sidebar_layers = reactive(env_layers()$habitat_all),
       habitat_data = habitat_suitability_s3
+    )
+    mod_SB4S_server(
+      id = "SB4S",
+      biodata = SB4S_frozensim
     )
   })
 }
