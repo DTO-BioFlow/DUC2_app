@@ -56,8 +56,8 @@ renv::restore()
 ### Clone the Repository
 
 ``` bash
-git clone https://github.com/your-org/DUC2_viewer.git
-cd DUC2_viewer
+git clone https://github.com/DTO-BioFlow/DUC2_app.git
+cd DUC2_app
 ```
 
 ## 📁 Project Structure
