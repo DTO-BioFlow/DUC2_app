@@ -116,9 +116,9 @@ diurnalPlot = function(dataIn, selectLocs) {
     scale_color_manual(values = cut.cols, labels = levels(cuts)) +
     scale_fill_manual(values = cut.cols, labels = levels(cuts)) +
     scale_x_continuous(
-      breaks = c(-1, 0),
+      breaks = c(-0.99, 0),
       labels = c("Sunset", "Sunrise"),
-      limits = c(-1, 0)
+      limits = c(-.99, 0.99)
     ) +
     theme_minimal() +
     theme(
@@ -126,8 +126,6 @@ diurnalPlot = function(dataIn, selectLocs) {
     ) +
     coord_polar(theta = "x", start = 0) +
     xlab('') +
-
-    #  facet_wrap(~Station) +
     guides(fill = "none") +
     theme(text = element_text(size = 15))
 
