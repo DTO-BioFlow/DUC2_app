@@ -52,6 +52,23 @@ $blue-dark:   var(--blue-dark,   #1a4a7a);
     color: white !important;
 }
 
+// ── Card-tab navigation ─────────────────────────────────────────────────────
+// navset_card_tab() places its navigation inside a card header. Keep inactive
+// labels readable on the project dark-blue header while preserving the selected
+// tab's white background and dark text.
+.bslib-card .card-header {
+  .nav-link {
+    color: white !important;
+  }
+
+  .nav-link.active,
+  .nav-item.show > .nav-link {
+    background-color: white !important;
+    color: var(--blue-dark) !important;
+    border-color: white !important;
+  }
+}
+
 // ── Home page buttons ─────────────────────────────────────────────────────────
 .bioflow-btn {
   background-color: var(--blue-medium) !important;
