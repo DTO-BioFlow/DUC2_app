@@ -78,6 +78,7 @@ mod_porpoise_ui <- function(id) {
       ),
       card(card_header("Station Details"), tableOutput(ns("station_table"))),
       card(
+        class = "porpoise-settings-card",
         card_header("Settings"),
         sliderInput(
           ns("YMselect"),

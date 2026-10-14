@@ -74,6 +74,25 @@ $blue-dark:   var(--blue-dark,   #1a4a7a);
   }
 }
 
+// ── Porpoise settings ───────────────────────────────────────────────────────
+// Allow the date-range slider to shrink with its grid column and center it in
+// the Settings card instead of letting its labels push beyond the card edge.
+.porpoise-settings-card {
+  min-width: 0;
+
+  .shiny-input-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+  }
+
+  .irs {
+    width: 100% !important;
+    max-width: 100%;
+  }
+}
+
 // ── Home page buttons ─────────────────────────────────────────────────────────
 .bioflow-btn {
   background-color: var(--blue-medium) !important;
