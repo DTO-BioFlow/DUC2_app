@@ -1,6 +1,8 @@
 box::use(
   shiny[
     NS,
+    actionButton,
+    bindEvent,
     sliderInput,
     plotOutput,
     tableOutput,
@@ -68,6 +70,7 @@ mod_porpoise_ui <- function(id) {
         ),
         nav_panel(
           title = "Daily Distribution of Detections",
+          actionButton(ns("make_diurnal"), "Generate plot", class = "btn-primary"),
           plotOutput(ns("diurnal_plot"), height = "650px")
         )
         # ,
@@ -350,7 +353,8 @@ mod_porpoise_server <- function(
       req(nrow(locations) > 0)
       # print(str(selected_data()))
       diurnalPlot(data, locations)
-    })
+    }) |>
+      bindEvent(input$make_diurnal)
 
     output$logo <- renderImage(
       {

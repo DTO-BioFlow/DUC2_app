@@ -53,11 +53,6 @@ make_base_map <- function(
       group = "EMODnet Bathymetry",
       options = tileOptions(pane = "basePane")
     ) |>
-    addProviderTiles(
-      "CartoDB.Positron",
-      group = "CartoDB.Positron",
-      options = tileOptions(pane = "basePane")
-    ) |>
     addMouseCoordinates() |>
     addFullscreenControl() |>
     addScaleBar(
@@ -71,13 +66,12 @@ make_base_map <- function(
     ) |>
     addLayersControl(
       baseGroups = c(
-        "CartoDB.Positron",
-        "Open Street Map",
-        "EMODnet Bathymetry"
+        "EMODnet Bathymetry",
+        "Open Street Map"
       ),
       options = layersControlOptions(collapsed = FALSE),
       position = "bottomleft"
-    )
+      )
 }
 
 # 2. environmental map ----------------------------------------------------
@@ -641,9 +635,8 @@ make_env_wms_map <- function(
     # Layer control
     addLayersControl(
       baseGroups = c(
-        "CartoDB.Positron",
-        "Open Street Map",
-        "EMODnet Bathymetry"
+        "EMODnet Bathymetry",
+        "Open Street Map"
       ),
       overlayGroups = names(legend_map),
       options = layersControlOptions(collapsed = FALSE),
