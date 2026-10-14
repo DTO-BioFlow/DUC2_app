@@ -1,5 +1,9 @@
 linters:
   linters_with_defaults(
     defaults = if (requireNamespace("box.linters", quietly = TRUE)) box.linters::rhino_default_linters else lintr::default_linters,
-    line_length_linter = line_length_linter(100)
+    line_length_linter = line_length_linter(100),
+    commented_code_linter = NULL,
+    object_name_linter = NULL,
+    object_length_linter = object_length_linter(50),
+    box_func_import_count_linter = box.linters::box_func_import_count_linter(40)
   )
