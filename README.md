@@ -335,7 +335,7 @@ box::use(
 )
 
 box::use(
-  app/logic/maps,
+  app / logic / maps,
 )
 ```
 
