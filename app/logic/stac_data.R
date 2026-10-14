@@ -1,8 +1,8 @@
 box::use(
-  tibble[tibble, as_tibble, add_row],
-  dplyr[arrange, distinct, filter],
-  rstac[stac, collections, get_request, stac_search, items_fetch],
-  utils[read.csv]
+  dplyr[arrange, desc, distinct, filter],
+  rstac[collections, get_request, items_fetch, stac, stac_search],
+  tibble[add_row, as_tibble, tibble],
+  utils[read.csv],
 )
 
 access_STAC_metadata <- function(
@@ -10,7 +10,8 @@ access_STAC_metadata <- function(
   stac_endpoint_url,
   api_endpoint_url,
   etn_dataset_name
-  # it could make sense at some point to include more of the collection/catalogue names as function arguments
+  # it could make sense at some point to include more of the collection/catalogue names as
+  # function arguments
 ) {
   # 0.  return df -------------------------------------------------------
   # this dataframe will be loaded, it will contain all WMS links and STAC collection names of the
@@ -34,7 +35,9 @@ access_STAC_metadata <- function(
   c_obj <- collections(stac_obj) |>
     get_request()
 
-  c_all <- c_obj$collections |> vapply(`[[`, character(1), "id") |> as_tibble()
+  c_all <- c_obj$collections |>
+    vapply(`[[`, character(1), "id") |>
+    as_tibble()
 
   # 2. get data layer data and metadata -------------------------------------
 
@@ -65,7 +68,7 @@ access_STAC_metadata <- function(
   }
 
   # Print the matching href
-  #print(etn_dataset_href)
+  # print(etn_dataset_href)
 
   # appending row to wms_registry
   wms_registry <- add_row(
@@ -648,7 +651,7 @@ access_STAC_metadata <- function(
   # seabedhabitats -----------------------------------------------------
 
   ## wms
-  seabedhabitats_wms_link <- "https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms?SERVICE=WMS&REQUEST=GetMap&LAYERS=eusm_eunis2019_group&VERSION=1.3.0&CRS=CRS:84&BBOX=-180,-90,180,90&WIDTH=800&HEIGHT=600&FORMAT=image/png" #seabedhabitats_items$features[[1]]$assets$wms$href
+  seabedhabitats_wms_link <- "https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms?SERVICE=WMS&REQUEST=GetMap&LAYERS=eusm_eunis2019_group&VERSION=1.3.0&CRS=CRS:84&BBOX=-180,-90,180,90&WIDTH=800&HEIGHT=600&FORMAT=image/png" # seabedhabitats_items$features[[1]]$assets$wms$href # nolint: line_length_linter.
   # seabedhabitats_wms_link
   # browseURL(seabedhabitats_wms_link)
   seabedhabitats_wms_base <- sub("\\?.*$", "", seabedhabitats_wms_link)
@@ -699,7 +702,7 @@ access_STAC_metadata <- function(
     wms_registry,
     env_data_name = "eez",
     collection_name = "",
-    wms_link = "https://geo.vliz.be/geoserver/MarineRegions/wms?service=WMS&version=1.1.0&request=GetMap&layers=MarineRegions%3Aeez&bbox=-180.0%2C-62.78834217149148%2C180.0%2C86.99400535016684&width=768&height=330&srs=EPSG%3A4326&styles=&format=application/openlayers",
+    wms_link = "https://geo.vliz.be/geoserver/MarineRegions/wms?service=WMS&version=1.1.0&request=GetMap&layers=MarineRegions%3Aeez&bbox=-180.0%2C-62.78834217149148%2C180.0%2C86.99400535016684&width=768&height=330&srs=EPSG%3A4326&styles=&format=application/openlayers", # nolint: line_length_linter.
     wms_base = "https://geo.vliz.be/geoserver/MarineRegions/wms",
     wms_layer_name = "eez",
     legend_link = "",
@@ -714,7 +717,7 @@ access_STAC_metadata <- function(
     wms_registry,
     env_data_name = "shipwrecks",
     collection_name = "",
-    wms_link = "https://geo.vliz.be/geoserver/Kustportaal/wms?service=WMS&version=1.1.0&request=GetMap&layers=Kustportaal%3Ascheepswrakken_20180604&bbox=2.305333333%2C51.11496667%2C4.39055%2C51.84788333&width=768&height=330&srs=EPSG%3A4326&styles=&format=application/openlayers",
+    wms_link = "https://geo.vliz.be/geoserver/Kustportaal/wms?service=WMS&version=1.1.0&request=GetMap&layers=Kustportaal%3Ascheepswrakken_20180604&bbox=2.305333333%2C51.11496667%2C4.39055%2C51.84788333&width=768&height=330&srs=EPSG%3A4326&styles=&format=application/openlayers", # nolint: line_length_linter.
     wms_base = "https://geo.vliz.be/geoserver/Kustportaal/wms",
     wms_layer_name = "Kustportaal:scheepswrakken_20180604",
     legend_link = "",
@@ -724,10 +727,11 @@ access_STAC_metadata <- function(
     distinct(env_data_name, wms_link, wms_layer_name, .keep_all = TRUE)
 
   ## BPNS seabed substrates --------------------------------------------------------------
-  # for now from the RBINS geoserver: https://spatial.naturalsciences.be/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0&filter=false
+  # for now from the RBINS geoserver:
+  # https://spatial.naturalsciences.be/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0&filter=false # nolint: line_length_linter.
 
   # wms
-  seabedsubstrates_wms_link <- "https://spatial.naturalsciences.be/geoserver/od_nature/wms?service=WMS&version=1.1.0&request=GetMap&layers=od_nature%3Asubstrate_BPNS_Seafloor&bbox=3783778.2435288355%2C3135783.371861253%2C3859575.3740788964%2C3222401.382971901&width=672&height=768&srs=EPSG%3A3035&styles=&format=application/openlayers"
+  seabedsubstrates_wms_link <- "https://spatial.naturalsciences.be/geoserver/od_nature/wms?service=WMS&version=1.1.0&request=GetMap&layers=od_nature%3Asubstrate_BPNS_Seafloor&bbox=3783778.2435288355%2C3135783.371861253%2C3859575.3740788964%2C3222401.382971901&width=672&height=768&srs=EPSG%3A3035&styles=&format=application/openlayers" # nolint: line_length_linter.
   seabedsubstrates_wms_base <- "https://spatial.naturalsciences.be/geoserver/od_nature/wms"
   seabedsubstrates_layer_name <- "od_nature:seabed_substrate_map"
 
@@ -789,7 +793,7 @@ load_STAC_metadata <- function(metadata_csv) {
   if (!file.exists(metadata_csv)) {
     access_STAC_metadata(
       wms_registry_path = metadata_csv,
-      stac_endpoint_url = 'https://catalog.dive.edito.eu/',
+      stac_endpoint_url = "https://catalog.dive.edito.eu/",
       api_endpoint_url = "https://api.dive.edito.eu/data/collections/",
       etn_dataset_name = "PhD_Goossens"
     )

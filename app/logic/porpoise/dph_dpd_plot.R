@@ -1,21 +1,21 @@
 box::use(
-  lubridate[year, month],
-  dplyr[group_by, summarize, mutate, tally, n],
   Rmisc[CI],
+  dplyr[group_by, mutate, n, summarize, tally],
   ggplot2[
-    ggplot,
     aes,
-    geom_line,
-    geom_errorbar,
-    scale_y_continuous,
-    theme_minimal,
-    theme,
     element_text,
-    ylab,
-    xlab
+    geom_errorbar,
+    geom_line,
+    ggplot,
+    scale_y_continuous,
+    theme,
+    theme_minimal,
+    xlab,
+    ylab
   ],
+  ggpubr[annotate_figure, ggarrange, text_grob],
+  lubridate[month, year],
   scales[number_format],
-  ggpubr[ggarrange, annotate_figure, text_grob]
 )
 
 DPHpDPDplot <- function(selected_data) {
@@ -29,18 +29,18 @@ DPHpDPDplot <- function(selected_data) {
     summarize(totalHours = n(), DPH = sum(PPM))
 
   DPD_all$posDay <- ifelse(DPD_all$DPH >= 1, 1, 0)
-  colnames(DPD_all)[1] <- 'Date'
+  colnames(DPD_all)[1] <- "Date"
 
   DPD_all$percDPHpDPD <- DPD_all$DPH / DPD_all$totalHours
 
   counts <- as.data.frame(table(DPD_all$Station, DPD_all$Mon))
-  names(counts)[1:2] <- c('Station', 'Mon')
+  names(counts)[1:2] <- c("Station", "Mon")
   posDays <- DPD_all |>
     group_by(Station, Mon) |>
     tally(posDay)
 
-  perDays <- merge(counts, posDays, by = c('Station', 'Mon'))
-  names(perDays)[4] <- 'DPC'
+  perDays <- merge(counts, posDays, by = c("Station", "Mon"))
+  names(perDays)[4] <- "DPC"
 
   DPD_all$Year <- year(DPD_all$Date)
   DPD_all$Mon <- as.factor(DPD_all$Mon)
@@ -55,7 +55,7 @@ DPHpDPDplot <- function(selected_data) {
     summarize(mean = mean(DPH), uci = CI(DPH)[1], lci = CI(DPH)[3]) |>
     mutate(YM = YM |> as.factor(), Station = Station |> as.factor())
 
-  lvls <- expand.grid(lapply(DPMo[, c('Station', 'YM')], levels))
+  lvls <- expand.grid(lapply(DPMo[, c("Station", "YM")], levels))
   DPMo_full <- merge(DPMo, lvls, all = TRUE)
 
   d2a <- ggplot(
@@ -66,16 +66,16 @@ DPHpDPDplot <- function(selected_data) {
     geom_errorbar(
       aes(ymin = lci, ymax = uci),
       width = 0.3,
-      position = 'dodge'
+      position = "dodge"
     ) +
-    #scale_colour_manual(values=cbbPalette)+
+    # scale_colour_manual(values=cbbPalette)+
     theme_minimal() +
-    ylab('') +
-    xlab('Year-Month') +
-    theme(legend.position = 'right') +
+    ylab("") +
+    xlab("Year-Month") +
+    theme(legend.position = "right") +
     theme(axis.text.x = element_text(angle = 70, vjust = 0.5, hjust = 0.3)) +
     theme(text = element_text(size = 10)) +
-    xlab('Year-Month')
+    xlab("Year-Month")
 
   DPMonly <- DPD_sub |>
     group_by(Mon) |>
@@ -89,8 +89,8 @@ DPHpDPDplot <- function(selected_data) {
       labels = number_format(accuracy = 0.01)
     ) +
     theme_minimal() +
-    ylab('') +
-    xlab('Month') +
+    ylab("") +
+    xlab("Month") +
     theme(text = element_text(size = 10))
 
   d2 <- ggarrange(d2b, d2a, nrow = 2, heights = c(0.55, 0.45))
@@ -104,5 +104,5 @@ DPHpDPDplot <- function(selected_data) {
     )
   )
 
-  return(d2_fin)
+  d2_fin
 }

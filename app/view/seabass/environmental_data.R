@@ -1,6 +1,6 @@
 box::use(
+  leaflet[leafletOutput, renderLeaflet],
   shiny[NS, moduleServer],
-  leaflet[leafletOutput, renderLeaflet]
 )
 
 mod_seabass_env_ui <- function(id) {

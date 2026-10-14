@@ -1,40 +1,6 @@
-
-box::use(
-  shiny[
-    NS,
-    radioButtons,
-    actionButton,
-    br,
-    sliderInput,
-    tags,
-    textOutput,
-    moduleServer,
-    renderText,
-    req,
-    reactive,
-    observeEvent,
-    updateSliderInput,
-    observe
-  ],
-  bslib[layout_sidebar, sidebar, layout_columns],
-  leaflet[
-    leafletOutput,
-    renderLeaflet,
-    setView,
-    addRasterImage,
-    addLegend,
-    leafletProxy,
-    clearImages,
-    clearControls
-  ],
-  terra[values]
-)
-
 # ui ----------------------------------------------------------------------
-
 mod_seabass_migration_ui <- function(id) {
   ns <- NS(id)
-
   layout_sidebar(
     sidebar = sidebar(
       width = 320,
@@ -70,9 +36,39 @@ mod_seabass_migration_ui <- function(id) {
     leafletOutput(ns("seabass_migration_map"), height = 700)
   )
 }
+box::use(
+  bslib[layout_columns, layout_sidebar, sidebar],
+  leaflet[
+    addLegend,
+    addRasterImage,
+    clearControls,
+    clearImages,
+    leafletOutput,
+    leafletProxy,
+    renderLeaflet,
+    setView
+  ],
+  shiny[
+    NS,
+    actionButton,
+    br,
+    moduleServer,
+    observe,
+    observeEvent,
+    radioButtons,
+    reactive,
+    renderText,
+    req,
+    sliderInput,
+    tags,
+    textOutput,
+    updateSliderInput
+  ],
+  terra[values],
+)
 
 box::use(
-  app / logic / maps[make_base_map]
+  app / logic / maps[make_base_map],
 )
 
 # make the map ------------------------------------------------------------

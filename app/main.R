@@ -1,47 +1,40 @@
+# import internal modules
 box::use(
-  shiny[
-    NS,
-    moduleServer,
-    tagList,
-    tags,
-    a,
-    actionLink,
-    checkboxGroupInput,
-    
-    addResourcePath,
-    reactive
-  ],
   bslib[
-    page_navbar,
     nav_panel,
     navbar_options,
     navset_pill,
+    page_navbar
   ],
-  htmltools[HTML],
   glue[glue],
+  htmltools[HTML],
+  shiny[
+    NS,
+    addResourcePath,
+    moduleServer,
+    reactive,
+    tagList,
+    tags
+  ],
 )
-#import internal modules
+
 box::use(
-  app /
-    logic /
-    config[dto_colors, bioflow_url, bioflow_duc2_url, s3_bucket_habitatsuit_url],
-  app / logic / maps[make_base_map, make_env_wms_map],
-  app / logic / stac_data[load_STAC_metadata],
   app / logic / SB4S / SB4S_api[load_SB4S_simout],
   app /
-    logic /
-    hsuit /
-    habitat_suitability_s3[load_habitat_suitability_s3],
+    logic / config[bioflow_duc2_url, bioflow_url, dto_colors, s3_bucket_habitatsuit_url],
   app /
     logic /
-    seabass /
-    telemetry_wrangle[build_monthyear_rds, prep_minicharts_inputs],
-  app / view / home[mod_home_ui, mod_home_server],
-  app / view / seabass / main[mod_seabass_ui, mod_seabass_server],
-  app / view / porpoise[mod_porpoise_ui, mod_porpoise_server],
-  app / view / environmental_data[mod_env_ui, mod_env_server],
-  app / view / habitat_suitability[mod_habitat_suitability_ui, mod_habitat_suitability_server],
-  app / view / SB4S[mod_SB4S_ui, mod_SB4S_server]
+    hsuit / habitat_suitability_s3[load_habitat_suitability_s3],
+  app /
+    logic /
+    seabass / telemetry_wrangle[build_monthyear_rds, prep_minicharts_inputs],
+  app / logic / stac_data[load_STAC_metadata],
+  app / view / SB4S[mod_SB4S_server, mod_SB4S_ui],
+  app / view / environmental_data[mod_env_server, mod_env_ui],
+  app / view / habitat_suitability[mod_habitat_suitability_server, mod_habitat_suitability_ui],
+  app / view / home[mod_home_server, mod_home_ui],
+  app / view / porpoise[mod_porpoise_server, mod_porpoise_ui],
+  app / view / seabass / main[mod_seabass_server, mod_seabass_ui],
 )
 
 addResourcePath(
@@ -156,7 +149,7 @@ ui <- function(id) {
           ),
           mod_habitat_suitability_ui(ns("habitat_suitability"))
         ),
-	nav_panel(
+        nav_panel(
           title = tags$span(
             "SB4S seabass simulation",
             style = "font-size: 16px; vertical-align:middle;"

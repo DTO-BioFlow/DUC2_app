@@ -1,26 +1,29 @@
 box::use(
+  bsicons[bs_icon],
+  bslib[accordion, accordion_panel, popover],
   shiny[
     NS,
-    moduleServer,
-    tags,
     actionLink,
     checkboxGroupInput,
-    reactive
+    moduleServer,
+    reactive,
+    tags
   ],
-  bslib[accordion, accordion_panel, popover],
-  bsicons[bs_icon],
-  app / view / habitat_suitability_sidebar[
-    mod_habitat_suitability_sidebar_ui,
-    mod_habitat_suitability_sidebar_server
-  ],
+)
+
+box::use(
   app / view / acoustic_telemetry_sidebar[
-    mod_acoustic_telemetry_sidebar_ui,
-    mod_acoustic_telemetry_sidebar_server
+    mod_acoustic_telemetry_sidebar_server,
+    mod_acoustic_telemetry_sidebar_ui
+  ],
+  app / view / habitat_suitability_sidebar[
+    mod_habitat_suitability_sidebar_server,
+    mod_habitat_suitability_sidebar_ui
   ],
   app / view / passive_acoustic_monitoring_sidebar[
-    mod_passive_acoustic_monitoring_sidebar_ui,
-    mod_passive_acoustic_monitoring_sidebar_server
-  ]
+    mod_passive_acoustic_monitoring_sidebar_server,
+    mod_passive_acoustic_monitoring_sidebar_ui
+  ],
 )
 
 layer_info <- function(ns, id, label, description, href) {
@@ -129,7 +132,8 @@ mod_env_filters_ui <- function(id, wms_layers, bioflow_duc2_url) {
 
   accordion(
     accordion_panel(
-      "Human Activities layers", icon = bs_icon("building"),
+      "Human Activities layers",
+      icon = bs_icon("building"),
       checkboxGroupInput(
         ns("human_activities_layers_sidebar"),
         NULL,
@@ -138,7 +142,8 @@ mod_env_filters_ui <- function(id, wms_layers, bioflow_duc2_url) {
       )
     ),
     accordion_panel(
-      "Natural layers", icon = bs_icon("water"),
+      "Natural layers",
+      icon = bs_icon("water"),
       checkboxGroupInput(
         ns("natural_layers_sidebar"),
         NULL,
@@ -147,18 +152,21 @@ mod_env_filters_ui <- function(id, wms_layers, bioflow_duc2_url) {
       )
     ),
     accordion_panel(
-      "Habitat Suitability", icon = bs_icon("layers"),
+      "Habitat Suitability",
+      icon = bs_icon("layers"),
       mod_habitat_suitability_sidebar_ui(ns("habitat_suitability"))
     ),
     accordion_panel(
-      "Acoustic telemetry", icon = bs_icon("broadcast"),
+      "Acoustic telemetry",
+      icon = bs_icon("broadcast"),
       mod_acoustic_telemetry_sidebar_ui(
         ns("acoustic_telemetry"),
         show_raw_layer = TRUE
       )
     ),
     accordion_panel(
-      "Passive acoustic monitoring", icon = bs_icon("soundwave"),
+      "Passive acoustic monitoring",
+      icon = bs_icon("soundwave"),
       mod_passive_acoustic_monitoring_sidebar_ui(ns("passive_acoustic_monitoring"))
     )
   )

@@ -1,8 +1,11 @@
 box::use(
-  shiny[NS, h2, h3, h4, h6, p, hr, br, tags, moduleServer],
   bslib[layout_columns],
   glue[glue],
-  app / logic / config[dto_colors, bioflow_url, bioflow_duc2_url]
+  shiny[NS, br, h2, h3, h4, h6, hr, moduleServer, p, tags],
+)
+
+box::use(
+  app / logic / config[bioflow_duc2_url, bioflow_url, dto_colors],
 )
 
 mod_home_ui <- function(
@@ -17,29 +20,24 @@ mod_home_ui <- function(
     tags$div(
       h2("Welcome! 👋"),
       p(
-        "Do you want to learn more about marine life and how it may be influenced by offshore infrastructures? You're in the right place!"
+        "Do you want to learn more about marine life and how it may be influenced by offshore infrastructures? You're in the right place!" # nolint: line_length_linter.
       ),
-
       h3("How to use this app"),
-
       hr(),
-      h4('European Seabass Data'),
+      h4("European Seabass Data"),
       p("<explanations>", style = "margin-bottom: 200px;"),
-
       hr(),
-      h4('Harbour Porpoise Data'),
+      h4("Harbour Porpoise Data"),
       p(
-        "Here one can visualize acoustic density data for the Harbour Porpoise. Data is visualized over time (days/weeks/months/years) and dirunal patterns.",
+        "Here one can visualize acoustic density data for the Harbour Porpoise. Data is visualized over time (days/weeks/months/years) and dirunal patterns.", # nolint: line_length_linter.
         br(),
-        "Using the rectangle tool on the left side of the map, select which stations you would like to view the data from. Plots will be automatically generated.  You can add and remove stations as you go, as well as adjust the dates.",
+        "Using the rectangle tool on the left side of the map, select which stations you would like to view the data from. Plots will be automatically generated.  You can add and remove stations as you go, as well as adjust the dates.", # nolint: line_length_linter.
         br(),
-        "Note: You should have at least five stations collecting data simultaneously in a given area in order to infer any meaningful pattern from porpoise acoustic density. ",
+        "Note: You should have at least five stations collecting data simultaneously in a given area in order to infer any meaningful pattern from porpoise acoustic density. ", # nolint: line_length_linter.
         style = "margin-bottom: 200px;"
       ),
-
       h6("Want to learn more?"),
       p("Click the buttons below!"),
-
       tags$div(
         tags$a(
           "More info on DUC2",

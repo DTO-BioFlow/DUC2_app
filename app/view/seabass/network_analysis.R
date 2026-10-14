@@ -1,32 +1,5 @@
 box::use(
-  shiny[
-    NS,
-    moduleServer,
-    reactive,
-    uiOutput,
-    tags,
-    tagList,
-    renderUI,
-    req
-  ],
   bslib[layout_sidebar, sidebar],
-  leaflet[
-    leafletOutput,
-    renderLeaflet,
-    addCircleMarkers,
-    addControl,
-    addLegend,
-    colorNumeric,
-    labelOptions
-  ],
-  leaflet.minicharts[addFlows, popupArgs],
-  htmltools[HTML],
-  app / logic / maps[make_base_map],
-  app / view / acoustic_telemetry_sidebar[
-    mod_acoustic_telemetry_sidebar_ui,
-    mod_acoustic_telemetry_sidebar_server,
-    format_month_range
-  ],
   dplyr[
     arrange,
     count,
@@ -34,8 +7,8 @@ box::use(
     distinct,
     filter,
     group_by,
-    left_join,
     lead,
+    left_join,
     mutate,
     n,
     n_distinct,
@@ -44,7 +17,37 @@ box::use(
     summarise,
     transmute,
     ungroup
-  ]
+  ],
+  htmltools[HTML],
+  leaflet.minicharts[addFlows, popupArgs],
+  leaflet[
+    addCircleMarkers,
+    addControl,
+    addLegend,
+    colorNumeric,
+    labelOptions,
+    leafletOutput,
+    renderLeaflet
+  ],
+  shiny[
+    NS,
+    moduleServer,
+    reactive,
+    renderUI,
+    req,
+    tagList,
+    tags,
+    uiOutput
+  ],
+)
+
+box::use(
+  app / logic / maps[make_base_map],
+  app / view / acoustic_telemetry_sidebar[
+    format_month_range,
+    mod_acoustic_telemetry_sidebar_server,
+    mod_acoustic_telemetry_sidebar_ui
+  ],
 )
 
 # ui ----------------------------------------------------------------------
@@ -202,7 +205,7 @@ mod_seabass_network_analysis_server <- function(
           stroke = FALSE,
           fillOpacity = 0.55,
           fillColor = "#6b7280",
-          popup = ~paste0("<b>", station_name, "</b>")
+          popup = ~ paste0("<b>", station_name, "</b>")
         )
 
       if (nrow(flows_m) > 0) {
@@ -233,9 +236,9 @@ mod_seabass_network_analysis_server <- function(
             color = "#111827",
             weight = 1,
             fillOpacity = 0.85,
-            fillColor = ~pal(n_detections),
+            fillColor = ~ pal(n_detections),
             popup = ~popup,
-            label = ~as.character(n_detections),
+            label = ~ as.character(n_detections),
             labelOptions = labelOptions(
               noHide = TRUE,
               direction = "center",

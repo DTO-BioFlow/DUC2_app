@@ -1,25 +1,25 @@
 box::use(
   arrow[read_parquet],
   dplyr[
-    mutate,
-    group_by,
-    ungroup,
-    n,
-    summarise,
-    first,
-    rename,
-    distinct,
+    across,
+    all_of,
     arrange,
-    transmute,
+    distinct,
+    first,
+    group_by,
+    left_join,
+    mutate,
+    n,
+    rename,
     select,
     starts_with,
-    left_join,
-    across,
-    all_of
+    summarise,
+    transmute,
+    ungroup
   ],
   lubridate[floor_date],
   sf[st_drop_geometry],
-  tidyr[pivot_wider, expand_grid, replace_na]
+  tidyr[expand_grid, pivot_wider, replace_na],
 )
 
 load_etn_dataset <- function(wms_layers, key = "seabass acoustic detections") {
@@ -32,17 +32,14 @@ summarise_etn_monthyear_individual <- function(etn_dataset) {
     mutate(
       monthyear = floor_date(datetime, unit = "months")
     ) |>
-
     # totals per month
     group_by(monthyear) |>
     mutate(n_detections_monthyear = n()) |>
     ungroup() |>
-
     # totals per month x station
     group_by(monthyear, station_name) |>
     mutate(n_detections_monthyear_station = n()) |>
     ungroup() |>
-
     # individual counts per month x station x tag
     group_by(monthyear, station_name, tag_serial_number) |>
     summarise(
@@ -63,8 +60,9 @@ build_monthyear_rds <- function(
   dataset_key
 ) {
   if (!file.exists(output_path)) {
-    #if summary file does not yet exist -> make it running `summarise_etn_monthyear_individual()`
-    # # TODO: change so that load_etn_dataset is used, but for now this breaks the submodule_acoustic_telemetry_data.R plots
+    # if summary file does not yet exist -> make it running `summarise_etn_monthyear_individual()`
+    # # TODO: change so that load_etn_dataset is used, but for now this breaks the
+    # submodule_acoustic_telemetry_data.R plots
     # etn_dataset <- load_etn_dataset(wms_layers, key = dataset_key)
 
     # if STAC etn data are unavailable - to remove later

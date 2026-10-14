@@ -1,29 +1,35 @@
 # asc 14 Jul 2026: fix issue in mod_SB4S_server that rast assumes corner-values, not cell-centered
-
 box::use(
+  bslib[layout_sidebar, sidebar],
+  leaflet[
+    addRasterImage,
+    clearControls,
+    clearImages,
+    leafletOutput,
+    leafletProxy,
+    renderLeaflet,
+    setView
+  ],
   shiny[
     NS,
     moduleServer,
     observe
   ],
-  bslib[layout_sidebar, sidebar],
-  leaflet[
-    leafletOutput,
-    renderLeaflet,
-    setView,
-    addRasterImage,
-    addLegend,
-    leafletProxy,
-    clearImages,
-    clearControls
-  ]
+  terra[rast],
+)
+
+box::use(
+  app / logic / SB4S / SB4S_api[flip_yaxis],
+  app / logic / maps[make_base_map],
+  app / view / SB4S_sidebar[
+    mod_SB4S_sidebar_server,
+    mod_SB4S_sidebar_ui
+  ],
 )
 
 # ui ----------------------------------------------------------------------
-
 mod_SB4S_ui <- function(id) {
   ns <- NS(id)
-
   layout_sidebar(
     sidebar = sidebar(
       width = 320,
@@ -35,15 +41,6 @@ mod_SB4S_ui <- function(id) {
   )
 }
 
-box::use(
-  app / logic / maps[make_base_map],
-  app / view / SB4S_sidebar[
-    mod_SB4S_sidebar_ui,
-    mod_SB4S_sidebar_server
-  ],
-  terra[rast, setValues],
-  app / logic / SB4S / SB4S_api[flip_yaxis]
-)
 # server  -----------------------------------------------------------------
 
 mod_SB4S_server <- function(
@@ -52,7 +49,6 @@ mod_SB4S_server <- function(
   habitat_data = NULL,
   sidebar_layers = NULL
 ) {
-  
   moduleServer(id, function(input, output, session) {
     layer_selection <- mod_SB4S_sidebar_server(
       "controls"
@@ -77,43 +73,47 @@ mod_SB4S_server <- function(
         clearControls()
 
       desire <- layer_selection()
-      #print(desire)
+      # print(desire)
 
 
       if (desire$show_layer == FALSE) {
         return(invisible(NULL))
       }
 
-      vnam = toString(desire$var)
-      if (vnam == "sum") {vnam <- "N"}
-      if (desire$time_index==0) {
-          vnam <- paste0(vnam, "tavg")
-	  xydata <- flip_yaxis(t(biodata[vnam][[1]]))  # NB transpose matrix
-      } else {
-          xytdata <- biodata[vnam][[1]]
-          xydata  <- flip_yaxis(t(xytdata[,,desire$time_index]))  # NB transpose matrix
+      vnam <- toString(desire$var)
+      if (vnam == "sum") {
+        vnam <- "N"
       }
-     
+      if (desire$time_index == 0) {
+        vnam <- paste0(vnam, "tavg")
+        xydata <- flip_yaxis(t(biodata[vnam][[1]])) # NB transpose matrix
+      } else {
+        xytdata <- biodata[vnam][[1]]
+        xydata <- flip_yaxis(t(xytdata[, , desire$time_index])) # NB transpose matrix
+      }
+
       # --- fix issue that rast assumes corner-values, not cell-centered
-      dx <- biodata$lon[2]-biodata$lon[1]
-      dy <- biodata$lat[2]-biodata$lat[1]
+      dx <- biodata$lon[2] - biodata$lon[1]
+      dy <- biodata$lat[2] - biodata$lat[1]
       nx <- dim(biodata$lon)[1]
       ny <- dim(biodata$lat)[1]
       xmin <- min(biodata$lon)
       xmax <- max(biodata$lon)
       ymin <- min(biodata$lat)
       ymax <- max(biodata$lat)
-      layer <- rast(nrows=ny, ncols=nx,
-                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-		    vals=xydata)           
-      #print(layer)
-      
+      layer <- rast(
+        nrows = ny, ncols = nx,
+        xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
+        vals = xydata
+      )
+      # print(layer)
+
       proxy |>
         addRasterImage(
           layer,
           opacity = 0.75,
           layerId = "SB4S_raster"
-        ) 
+        )
     })
   })
 }

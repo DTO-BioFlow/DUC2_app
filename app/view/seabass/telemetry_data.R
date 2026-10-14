@@ -1,43 +1,46 @@
 box::use(
-  shiny[
-    NS,
-    actionButton,
-    sliderInput,
-    uiOutput,
-    moduleServer,
-    observeEvent,
-    reactive,
-    renderUI,
-    updateSliderInput,
-    tagList,
-    tags,
-    textOutput,
-    renderText,
-    req
+  bslib[layout_columns, layout_sidebar, sidebar],
+  dplyr[
+    arrange,
+    desc,
+    filter,
+    group_by,
+    mutate,
+    n_distinct,
+    pull,
+    slice_head,
+    summarise
   ],
-  bslib[layout_sidebar, sidebar, layout_columns],
+  htmltools[HTML],
   leaflet[
-    leafletOutput,
-    renderLeaflet,
     addCircleMarkers,
     addControl,
     addLegend,
     colorNumeric,
-    labelOptions
+    labelOptions,
+    leafletOutput,
+    renderLeaflet
   ],
-  htmltools[HTML],
+  shiny[
+    NS,
+    actionButton,
+    moduleServer,
+    observeEvent,
+    reactive,
+    renderText,
+    renderUI,
+    req,
+    sliderInput,
+    tagList,
+    tags,
+    textOutput,
+    uiOutput,
+    updateSliderInput
+  ],
+)
+
+box::use(
   app / logic / maps[make_base_map],
-  dplyr[
-    mutate,
-    filter,
-    summarise,
-    pull,
-    n_distinct,
-    group_by,
-    arrange,
-    desc,
-    slice_head
-  ]
 )
 
 # ui ----------------------------------------------------------------------
@@ -252,7 +255,7 @@ mod_seabass_telemetry_data_server <- function(
           fillOpacity = 0.75,
           fillColor = "#666666",
           group = "Receiver stations",
-          popup = ~paste0("<b>", station_name, "</b>")
+          popup = ~ paste0("<b>", station_name, "</b>")
         )
 
       if (nrow(bubbles_m) > 0) {
@@ -266,7 +269,7 @@ mod_seabass_telemetry_data_server <- function(
             color = "#003f5c",
             weight = 1,
             fillOpacity = 0.85,
-            fillColor = ~detection_pal(n_station),
+            fillColor = ~ detection_pal(n_station),
             label = ~marker_label,
             labelOptions = labelOptions(
               noHide = TRUE,

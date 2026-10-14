@@ -1,27 +1,6 @@
-box::use(
-  shiny[
-    NS,
-    moduleServer,
-    observe
-  ],
-  bslib[layout_sidebar, sidebar],
-  leaflet[
-    leafletOutput,
-    renderLeaflet,
-    setView,
-    addRasterImage,
-    addLegend,
-    leafletProxy,
-    clearImages,
-    clearControls
-  ]
-)
-
 # ui ----------------------------------------------------------------------
-
 mod_habitat_suitability_ui <- function(id) {
   ns <- NS(id)
-
   layout_sidebar(
     sidebar = sidebar(
       width = 320,
@@ -32,15 +11,34 @@ mod_habitat_suitability_ui <- function(id) {
     leafletOutput(ns("habitat_map"), height = 700)
   )
 }
+box::use(
+  bslib[layout_sidebar, sidebar],
+  leaflet[
+    addLegend,
+    addRasterImage,
+    clearControls,
+    clearImages,
+    leafletOutput,
+    leafletProxy,
+    renderLeaflet,
+    setView
+  ],
+  shiny[
+    NS,
+    moduleServer,
+    observe
+  ],
+)
 
 box::use(
   app / logic / maps[make_base_map],
   app / view / habitat_suitability_sidebar[
-    mod_habitat_suitability_sidebar_ui,
+    habitat_suitability_selected_layer,
     mod_habitat_suitability_sidebar_server,
-    habitat_suitability_selected_layer
-  ]
+    mod_habitat_suitability_sidebar_ui
+  ],
 )
+
 # server  -----------------------------------------------------------------
 
 mod_habitat_suitability_server <- function(

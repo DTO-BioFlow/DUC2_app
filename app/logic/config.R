@@ -1,9 +1,10 @@
-
 # colors ------------------------------------------------------------------
 
-dto_colors <- list(blue_light  = "#cde3f6", 
-                   blue_medium = "#477292",
-                   blue_dark   = "#11395a")
+dto_colors <- list(
+  blue_light = "#cde3f6",
+  blue_medium = "#477292",
+  blue_dark = "#11395a"
+)
 
 
 # urls --------------------------------------------------------------------

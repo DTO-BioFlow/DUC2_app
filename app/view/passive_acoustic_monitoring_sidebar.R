@@ -1,4 +1,5 @@
 box::use(
+  bslib[input_switch],
   shiny[
     NS,
     moduleServer,
@@ -8,7 +9,6 @@ box::use(
     tags,
     uiOutput
   ],
-  bslib[input_switch]
 )
 
 mod_passive_acoustic_monitoring_sidebar_ui <- function(id) {

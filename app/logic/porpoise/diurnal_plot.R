@@ -1,21 +1,21 @@
 box::use(
-  grDevices[colorRampPalette],
-  suntools[sunriset],
   ggplot2[
-    ggplot,
     aes,
-    geom_histogram,
     after_stat,
+    coord_polar,
+    element_text,
+    geom_histogram,
+    ggplot,
+    guides,
     scale_color_manual,
     scale_fill_manual,
     scale_x_continuous,
-    theme_minimal,
     theme,
-    element_text,
-    coord_polar,
-    xlab,
-    guides
-  ]
+    theme_minimal,
+    xlab
+  ],
+  grDevices[colorRampPalette],
+  suntools[sunriset],
 )
 
 diurnalPlot <- function(dataIn, selectLocs) {
@@ -29,7 +29,7 @@ diurnalPlot <- function(dataIn, selectLocs) {
 
   # Get the sunrise/sunset for those days per station
   solarTimes <- list()
-  for (s in 1:nrow(selectLocs)) {
+  for (s in seq_len(nrow(selectLocs))) {
     sunR <- sunriset(
       matrix(c(selectLocs$long[s], selectLocs$lat[s]), nrow = 1),
       as.POSIXct.Date(dates, tz = "utc"),
@@ -58,7 +58,8 @@ diurnalPlot <- function(dataIn, selectLocs) {
     }
 
     xdidc <- match(as.Date(stationData$datetime), as.Date(solarTimes[[nt]][, 1]))
-    # Normalize the time between sunset and sunrise (-1 - 0) and sunrise and sunset (0 - 1) via linear interpolation.
+    # Normalize the time between sunset and sunrise (-1 - 0) and sunrise and sunset (0 - 1)
+    # via linear interpolation.
 
     normalizedTime <- NULL
     for (dd in seq_along(xdidc)) {
@@ -128,5 +129,5 @@ diurnalPlot <- function(dataIn, selectLocs) {
     guides(fill = "none") +
     theme(text = element_text(size = 15))
 
-  return(diurnalp)
+  diurnalp
 }

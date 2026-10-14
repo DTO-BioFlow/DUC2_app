@@ -1,18 +1,18 @@
 box::use(
+  bslib[input_switch],
   shiny[
     NS,
     moduleServer,
+    reactive,
+    renderText,
+    renderUI,
+    req,
     selectInput,
     sliderInput,
-    uiOutput,
-    textOutput,
-    renderUI,
-    renderText,
     tags,
-    reactive,
-    req
+    textOutput,
+    uiOutput
   ],
-  bslib[input_switch]
 )
 
 mod_acoustic_telemetry_sidebar_ui <- function(

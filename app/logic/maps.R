@@ -1,27 +1,26 @@
 box::use(
-  leaflet[
-    leaflet,
-    leafletProxy,
-    setView,
-    addMapPane,
-    addTiles,
-    tileOptions,
-    addProviderTiles,
-    addScaleBar,
-    scaleBarOptions,
-    addControl,
-    addLayersControl,
-    layersControlOptions,
-    addWMSTiles,
-    WMSTileOptions,
-    clearGroup,
-    hideGroup,
-    removeControl
-  ],
+  htmltools[HTML],
+  htmlwidgets[onRender],
   leafem[addMouseCoordinates],
   leaflet.extras[addFullscreenControl],
-  htmltools[HTML],
-  htmlwidgets[onRender]
+  leaflet[
+    WMSTileOptions,
+    addControl,
+    addLayersControl,
+    addMapPane,
+    addScaleBar,
+    addTiles,
+    addWMSTiles,
+    clearGroup,
+    hideGroup,
+    layersControlOptions,
+    leaflet,
+    leafletProxy,
+    removeControl,
+    scaleBarOptions,
+    setView,
+    tileOptions
+  ],
 )
 
 # 1. base layer map -------------------------------------------------------
@@ -33,7 +32,7 @@ make_base_map <- function(
   arrow_src = "north_arrow.png"
 ) {
   north_arrow <-
-    "<img src='https://www.clipartbest.com/cliparts/yTo/Lgr/yToLgryGc.png' style='width:35px;height:45px;'>"
+    "<img src='https://www.clipartbest.com/cliparts/yTo/Lgr/yToLgryGc.png' style='width:35px;height:45px;'>" # nolint: line_length_linter.
 
   # ## TODO: change to file in .www/, not working for the moment
   # north_arrow <- sprintf(
@@ -49,7 +48,7 @@ make_base_map <- function(
       options = tileOptions(pane = "basePane")
     ) |>
     addTiles(
-      urlTemplate = "https://tiles.emodnet-bathymetry.eu/2020/baselayer/web_mercator/{z}/{x}/{y}.png",
+      urlTemplate = "https://tiles.emodnet-bathymetry.eu/2020/baselayer/web_mercator/{z}/{x}/{y}.png", # nolint: line_length_linter.
       group = "EMODnet Bathymetry",
       options = tileOptions(pane = "basePane")
     ) |>
@@ -71,7 +70,7 @@ make_base_map <- function(
       ),
       options = layersControlOptions(collapsed = FALSE),
       position = "bottomleft"
-      )
+    )
 }
 
 # 2. environmental map ----------------------------------------------------
@@ -661,7 +660,7 @@ make_env_wms_map <- function(
         "}",
         "",
         "function syncFromLayerControl(){",
-        "  var inputs = el.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]');",
+        "  var inputs = el.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]');", # nolint: line_length_linter.
         "  inputs.forEach(function(inp){",
         "    var label = inp.parentElement;",
         "    var name  = label ? norm(label.textContent) : null;",
@@ -673,7 +672,7 @@ make_env_wms_map <- function(
         "",
         "function activeOverlayNames(){",
         "  var names = [];",
-        "  var inputs = el.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]');",
+        "  var inputs = el.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]');", # nolint: line_length_linter.
         "  inputs.forEach(function(inp){",
         "    if(inp.checked){",
         "      var label = inp.parentElement;",
@@ -721,7 +720,7 @@ make_env_wms_map <- function(
         "  if(!ctl) return;",
         "  var overlays = ctl.querySelector('.leaflet-control-layers-overlays');",
         "  if(!overlays) return;",
-        "  overlays.querySelectorAll('.overlay-section-heading').forEach(function(n){ n.remove(); });",
+        "  overlays.querySelectorAll('.overlay-section-heading').forEach(function(n){ n.remove(); });", # nolint: line_length_linter.
         "  var labelByName = {};",
         "  overlays.querySelectorAll('label').forEach(function(lab){",
         "    var name = norm(lab.textContent);",

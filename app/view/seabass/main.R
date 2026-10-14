@@ -1,20 +1,17 @@
 box::use(
+  bslib[nav_panel, navset_card_tab, page_fluid],
   shiny[NS, moduleServer],
-  bslib[navset_card_tab, nav_panel, page_fluid],
-  app /
-    view /
-    seabass /
-    telemetry_data[
-      mod_seabass_telemetry_ui,
-      mod_seabass_telemetry_data_server
-    ],
-  app /
-    view /
-    seabass /
-    network_analysis[
-      mod_seabass_network_analysis_ui,
-      mod_seabass_network_analysis_server
-    ]
+)
+
+box::use(
+  app / view / seabass / network_analysis[
+    mod_seabass_network_analysis_server,
+    mod_seabass_network_analysis_ui
+  ],
+  app / view / seabass / telemetry_data[
+    mod_seabass_telemetry_data_server,
+    mod_seabass_telemetry_ui
+  ],
 )
 
 mod_seabass_ui <- function(id) {

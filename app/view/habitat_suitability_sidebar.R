@@ -1,23 +1,23 @@
 box::use(
+  bslib[input_switch],
   shiny[
     NS,
+    isolate,
     moduleServer,
+    observe,
     radioButtons,
+    reactive,
+    renderText,
+    renderUI,
+    req,
     selectInput,
     sliderInput,
+    tags,
     textOutput,
     uiOutput,
-    renderUI,
-    renderText,
-    tags,
-    observe,
-    reactive,
-    req,
-    updateSliderInput,
-    isolate
+    updateSliderInput
   ],
-  bslib[input_switch],
-  terra[nlyr]
+  terra[nlyr],
 )
 
 habitat_period_choices <- function() {

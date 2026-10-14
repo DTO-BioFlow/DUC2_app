@@ -1,44 +1,13 @@
 box::use(
-  shiny[
-    NS,
-    actionButton,
-    bindEvent,
-    sliderInput,
-    plotOutput,
-    tableOutput,
-    imageOutput,
-    moduleServer,
-    reactiveValues,
-    reactiveVal,
-    observeEvent,
-    reactive,
-    showNotification,
-    renderTable,
-    renderPlot,
-    renderImage,
-    req
-  ],
   bslib[
-    page_fillable,
-    layout_columns,
     card,
     card_header,
+    layout_columns,
+    nav_panel,
     navset_card_tab,
-    nav_panel
+    page_fillable
   ],
-  leaflet[
-    leafletOutput,
-    renderLeaflet,
-    leafletProxy,
-    colorNumeric,
-    addMapPane,
-    addPolygons,
-    addCircleMarkers,
-    addLegend,
-    hideGroup,
-    showGroup,
-    pathOptions
-  ],
+  dplyr[filter, mutate, select, slice_head],
   leaflet.extras[
     addDrawToolbar,
     drawRectangleOptions,
@@ -46,15 +15,46 @@ box::use(
     editToolbarOptions,
     selectedPathOptions
   ],
-  sf[st_crs, st_bbox, st_as_sfc, st_transform, st_within],
-  dplyr[slice_head, select, filter, mutate],
+  leaflet[
+    addCircleMarkers,
+    addLegend,
+    addMapPane,
+    addPolygons,
+    colorNumeric,
+    hideGroup,
+    leafletOutput,
+    leafletProxy,
+    pathOptions,
+    renderLeaflet,
+    showGroup
+  ],
+  sf[st_as_sfc, st_bbox, st_crs, st_transform, st_within],
+  shiny[
+    NS,
+    actionButton,
+    bindEvent,
+    imageOutput,
+    moduleServer,
+    observeEvent,
+    plotOutput,
+    reactive,
+    reactiveVal,
+    reactiveValues,
+    renderImage,
+    renderPlot,
+    renderTable,
+    req,
+    showNotification,
+    sliderInput,
+    tableOutput
+  ],
   viridisLite[viridis],
-  app / logic / porpoise / diurnal_plot[diurnalPlot],
-  app / logic / porpoise / dph_dpd_plot[DPHpDPDplot]
 )
 
 box::use(
-  app / logic / maps[make_base_map]
+  app / logic / maps[make_base_map],
+  app / logic / porpoise / diurnal_plot[diurnalPlot],
+  app / logic / porpoise / dph_dpd_plot[DPHpDPDplot],
 )
 
 mod_porpoise_ui <- function(id) {
@@ -185,16 +185,19 @@ mod_porpoise_server <- function(
       porp_map
     })
 
-    observeEvent(selected_layers(), {
-      proxy <- leafletProxy("map", session = session)
-      selected <- selected_layers()
-      matched <- intersect(selected, porpoise_overlay_groups)
+    observeEvent(selected_layers(),
+      {
+        proxy <- leafletProxy("map", session = session)
+        selected <- selected_layers()
+        matched <- intersect(selected, porpoise_overlay_groups)
 
-      if (length(matched)) {
-        proxy %>% hideGroup(porpoise_overlay_groups)
-        proxy %>% showGroup(matched)
-      }
-    }, ignoreNULL = FALSE)
+        if (length(matched)) {
+          proxy |> hideGroup(porpoise_overlay_groups)
+          proxy |> showGroup(matched)
+        }
+      },
+      ignoreNULL = FALSE
+    )
 
     # ---- Spatial edit/selection handling ----  for old map
     # edits <- callModule(editMod, "editor", porp_map)

@@ -1,29 +1,26 @@
 ##################################################################################
 ##################################################################################
-
 # Author: Lotte Pohl
 # Email: lotte.pohl@vliz.be
 # Date: 2026-01-29
 # Script Name: ~/DUC2_viewer_acoustic_telemetry/R/helpers_load_acoustic_telemetry_GAM_s3.R
 # Script Description: load data layers from s3 bucket resulting from GAM modeling workflow
-
 ##################################################################################
 ##################################################################################
-
 # -----------------------
 # Create example rasters
 # (replace with rast("seabass.nc"), rast("porpoise.nc"))
 # -----------------------
-
 box::use(
-  terra[rast, values, `values<-`, ncell],
-  leaflet[colorNumeric],
   httr[GET, write_disk],
-  stats[runif]
+  leaflet[colorNumeric],
+  stats[runif],
+  terra[ncell, rast, setValues, values],
 )
 
 load_acoustic_telemetry_GAM_s3 <- function(s3_bucket_url) {
-  # TODO: check if make_raster() should be continued to determine the color scale for the seabass layers
+  # TODO: check if make_raster() should be continued to determine the color scale for the
+  # seabass layers
   make_raster <- function(seed) {
     set.seed(seed)
     r <- rast(
@@ -35,7 +32,7 @@ load_acoustic_telemetry_GAM_s3 <- function(s3_bucket_url) {
       ymax = 52,
       nlyrs = 12
     )
-    values(r) <- runif(ncell(r) * 12)
+    r <- setValues(r, runif(ncell(r) * 12))
     names(r) <- month.name
     r
   }
@@ -160,5 +157,5 @@ load_acoustic_telemetry_GAM_s3 <- function(s3_bucket_url) {
       data_palettes = data_palettes
     )
 
-  return(telemetry_gam_s3)
+  telemetry_gam_s3
 }

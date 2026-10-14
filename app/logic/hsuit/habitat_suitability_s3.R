@@ -1,7 +1,7 @@
 box::use(
-  terra[rast, minmax],
+  httr[GET, stop_for_status, timeout, write_disk],
   leaflet[colorNumeric],
-  httr[GET, write_disk, stop_for_status, timeout]
+  terra[minmax, rast],
 )
 
 load_habitat_suitability_s3 <- function(s3_bucket_url) {

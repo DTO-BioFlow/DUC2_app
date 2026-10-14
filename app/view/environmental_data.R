@@ -1,20 +1,4 @@
 box::use(
-  shiny[NS, moduleServer, observeEvent, reactiveVal],
-  leaflet[
-    leafletOutput,
-    renderLeaflet,
-    leafletProxy,
-    clearGroup,
-    clearImages,
-    addCircleMarkers,
-    addRasterImage,
-    addControl,
-    addLegend,
-    colorNumeric,
-    labelOptions,
-    removeControl
-  ],
-  leaflet.minicharts[addFlows, clearFlows, popupArgs],
   bslib[layout_sidebar, sidebar],
   dplyr[
     arrange,
@@ -27,23 +11,40 @@ box::use(
     n_distinct,
     summarise
   ],
-  app / view / environmental_filters[mod_env_filters_ui, mod_env_filters_server],
-  app / view / habitat_suitability_sidebar[habitat_suitability_selected_layer],
-  app / view / seabass / network_analysis[
-    prep_network_analysis_data,
-    station_points_for_range,
-    flow_lines_for_range,
-    detection_domain,
-    flow_domain,
-    scale_between
-  ],
   htmltools[HTML],
-  app / logic / config[bioflow_duc2_url]
+  leaflet.minicharts[addFlows, clearFlows, popupArgs],
+  leaflet[
+    addCircleMarkers,
+    addControl,
+    addLegend,
+    addRasterImage,
+    clearGroup,
+    clearImages,
+    colorNumeric,
+    labelOptions,
+    leafletOutput,
+    leafletProxy,
+    removeControl,
+    renderLeaflet
+  ],
+  shiny[NS, moduleServer, observeEvent, reactiveVal],
 )
 
 box::use(
+  app / logic / config[bioflow_duc2_url],
   app / logic / maps[make_base_map, make_env_base_map, update_env_wms_map],
+  app / view / environmental_filters[mod_env_filters_server, mod_env_filters_ui],
+  app / view / habitat_suitability_sidebar[habitat_suitability_selected_layer],
+  app / view / seabass / network_analysis[
+    detection_domain,
+    flow_domain,
+    flow_lines_for_range,
+    prep_network_analysis_data,
+    scale_between,
+    station_points_for_range
+  ],
 )
+
 mod_env_ui <- function(id, wms_layers) {
   ns <- NS(id)
   layout_sidebar(
@@ -224,7 +225,7 @@ mod_env_server <- function(
               fillOpacity = 0.55,
               fillColor = "#6b7280",
               group = "Acoustic telemetry raw receiver stations",
-              popup = ~paste0("<b>", station_name, "</b>")
+              popup = ~ paste0("<b>", station_name, "</b>")
             )
 
           if (nrow(raw_points) > 0) {
@@ -238,9 +239,9 @@ mod_env_server <- function(
                 color = "#003f5c",
                 weight = 1,
                 fillOpacity = 0.85,
-                fillColor = ~acoustic_raw_pal(n_detections),
+                fillColor = ~ acoustic_raw_pal(n_detections),
                 popup = ~popup,
-                label = ~as.character(n_detections),
+                label = ~ as.character(n_detections),
                 group = "Acoustic telemetry raw detections",
                 labelOptions = labelOptions(
                   noHide = TRUE,
@@ -304,7 +305,7 @@ mod_env_server <- function(
               fillOpacity = 0.55,
               fillColor = "#6b7280",
               group = "Acoustic telemetry network receiver stations",
-              popup = ~paste0("<b>", station_name, "</b>")
+              popup = ~ paste0("<b>", station_name, "</b>")
             )
 
           if (nrow(flows_range) > 0) {
@@ -335,9 +336,9 @@ mod_env_server <- function(
                 color = "#111827",
                 weight = 1,
                 fillOpacity = 0.85,
-                fillColor = ~acoustic_pal(n_detections),
+                fillColor = ~ acoustic_pal(n_detections),
                 popup = ~popup,
-                label = ~as.character(n_detections),
+                label = ~ as.character(n_detections),
                 group = "Acoustic telemetry network detections",
                 labelOptions = labelOptions(
                   noHide = TRUE,
@@ -410,7 +411,7 @@ mod_env_server <- function(
             fillOpacity = 0.55,
             fillColor = "#6b7280",
             group = "PAM stations",
-            popup = ~paste0("<b>", Station, "</b>")
+            popup = ~ paste0("<b>", Station, "</b>")
           )
 
         if (nrow(pam_points) > 0) {
@@ -424,7 +425,7 @@ mod_env_server <- function(
               color = "#08306b",
               weight = 1,
               fillOpacity = 0.85,
-              fillColor = ~pam_pal(positive_ratio),
+              fillColor = ~ pam_pal(positive_ratio),
               popup = ~popup,
               label = ~ratio_label,
               group = "PAM positive-hour ratio",
