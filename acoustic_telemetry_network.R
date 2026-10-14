@@ -165,7 +165,7 @@ monthly_receivers <-
 months_available <- sort(unique(monthly_network$year_month))
 
 m_monthly <- leaflet(options = leafletOptions(preferCanvas = TRUE)) %>%
-  addProviderTiles(providers$CartoDB.Positron)
+  addProviderTiles(providers$EMODnet Bathymetry)
 
 for (ym in months_available) {
   
