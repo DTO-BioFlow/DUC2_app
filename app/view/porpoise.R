@@ -79,6 +79,7 @@ mod_porpoise_ui <- function(id) {
       card(card_header("Station Details"), tableOutput(ns("station_table"))),
       card(
         class = "porpoise-settings-card",
+        fill = FALSE,
         card_header("Settings"),
         sliderInput(
           ns("YMselect"),
@@ -88,7 +89,8 @@ mod_porpoise_ui <- function(id) {
           value = c(
             as.Date("2015-01-01", "%Y-%m-%d"),
             as.Date(Sys.Date(), "%Y-%m-%d")
-          )
+          ),
+          width = "100%"
         ),
         imageOutput(ns("logo"))
       ), ## Update this if older data is incorporated
