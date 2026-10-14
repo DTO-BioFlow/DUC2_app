@@ -274,6 +274,89 @@ mod_seabass_migration_server <- function(id, base_map_fun) {
 -   **Environmental Data**: EDITO STAC catalog (metadata in `data/EDITO_STAC_layers_metadata.csv`)
 -   **Species Predictions**: GAM models from S3 storage
 
+## 🛠️ Developer Guide
+
+This is a Rhino application. Work from the repository root so that `.Rprofile`
+activates the project's `renv` environment and configures `box` module paths.
+
+### Daily development loop
+
+1.  Restore the locked environment after cloning or when switching to a fresh
+    R installation:
+
+    ``` r
+    renv::restore()
+    ```
+
+2.  Make the change in the appropriate module under `app/`, keeping views,
+    application logic, and static assets separate.
+
+3.  Check R style and Rhino/`box` conventions. `rhino::lint_r()` uses the
+    repository's [`.lintr`](.lintr) configuration, including its 100-character
+    line limit:
+
+    ``` r
+    rhino::lint_r()
+    ```
+
+4.  Run the test suite, then exercise the changed behaviour in the app:
+
+    ``` r
+    rhino::test_r()
+    rhino::app()
+    ```
+
+### Packages and dependencies
+
+For an application dependency, use Rhino's package helper rather than calling
+`install.packages()` or manually editing `renv.lock`:
+
+``` r
+rhino::pkg_install("package-name")
+```
+
+`rhino::pkg_install()` installs the package into the project library, records
+it in `dependencies.R`, and snapshots the resulting lockfile. The helper is
+named `pkg_install()` (not `install_pkg()`). Commit the matching changes to
+`dependencies.R` and `renv.lock` with the code that needs the dependency.
+
+### Modules and imports
+
+Rhino loads application code as `box` modules. Add the imports a file needs at
+the top with `box::use()`; do not use `library()` or `source()` in application
+modules. Use one `box::use()` call for R packages and a separate one for local
+application modules, keep entries alphabetical, and retain trailing commas.
+
+Prefer explicit imports so the origin of a function is clear:
+
+``` r
+box::use(
+  shiny[moduleServer, NS],
+)
+
+box::use(
+  app/logic/maps,
+)
+```
+
+Avoid wildcard imports such as `shiny[...]`. If a file needs many functions
+from one package, import the package and call its functions through the module
+object (for example, `shiny$tagList()`). Export only the functions or objects
+that another module must use. Keep reusable helpers in `app/logic/` and Shiny
+UI/server modules in `app/view/`; `app/main.R` composes them. Leave the Rhino
+entrypoint in `app.R` unchanged.
+
+### Before opening a pull request
+
+Run `rhino::lint_r()` and `rhino::test_r()` from a clean R session, then start
+the app and check the changed flow manually. The CI workflow also runs
+`rhino::lint_js()`, `rhino::lint_sass()`, `rhino::build_js()`,
+`rhino::build_sass()`, and the Cypress end-to-end tests; run the relevant
+commands locally when your change affects frontend assets or a user journey.
+This project is configured to use Node for Sass in `rhino.yml`.
+`rhino::diagnostics()` is useful when reporting an environment problem because
+it records the R, Rhino, Node, and operating-system versions.
+
 ## 🤝 Contributing
 
 ### Development Workflow
